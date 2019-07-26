@@ -45,6 +45,13 @@ a:hover {
     z-index: 100;
 }
 
+#qrcode {
+    text-align: center;
+}
+
+#qrcaption {
+    text-align: center;
+}
 
 :root {
     --dark-color: #111111;
