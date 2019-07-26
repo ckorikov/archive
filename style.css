@@ -1,0 +1,36 @@
+body {
+    font-family: 'Merriweather', serif;
+    color: #111111;
+    background-color: #FFFFFF;
+}
+
+.marker-underline {
+    border-bottom: 0.2cm solid var(--highlight-color);
+}
+
+.marker {
+    background-color: var(--highlight-color);
+}
+
+a {
+    color: #111111;
+}
+
+.tag {
+    display: inline-block;
+    font-size: 8px;
+    margin: 2px;
+    padding: 3px;
+    background-color: var(--background-color);
+}
+
+.tag:hover {
+    color: #111111;
+    background-color: var(--highlight-color);
+}
+
+
+:root {
+    --highlight-color: #4AD5CA;
+    --background-color: #F3F3F3; 
+}
