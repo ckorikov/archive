@@ -139,6 +139,7 @@ function show_list(req) {
       type == 'presentation' ? render_presentation(element) :
       type == 'conferencePaper' ? render_conferencePaper(element) :
       type == 'journalArticle' ? render_journalArticle(element) :
+      type == 'thesis' ? render_thesis(element) :
       render_misc(element)
     );
   });
@@ -149,32 +150,49 @@ function render_tags(element) {
 }
 
 function render_blogPost(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon_type = element['websiteType'] == 'Habr' ? 'fas fa-heading' : 'fas fa-globe';
+  var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
+  var title_with_link = '<a href="' + element['url'] + '"  target="_blank">' + element['title'] + '</a>';
+  var data = [icon + title_with_link, render_tags(element)];
   return render_element(data);
 }
 
 function render_webpage(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon_type = element['websiteType'] == 'GitHub' ? 'fab fa-github' : 'fas fa-globe';
+  var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
+  var title_with_link = '<a href="' + element['url'] + '"  target="_blank">' + element['title'] + '</a>';
+  var data = [icon + title_with_link, render_tags(element)];
   return render_element(data);
 }
 
 function render_presentation(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon_type = element['presentationType'] == 'Lecture' ? 'fas fa-chalkboard-teacher' : 'fas fa-comments';
+  var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
+  var data = [icon + element['title'], render_tags(element)];
   return render_element(data);
 }
 
 function render_conferencePaper(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
+  var data = [icon + element['title'], render_tags(element)];
   return render_element(data);
 }
 
 function render_journalArticle(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
+  var data = [icon + element['title'], render_tags(element)];
+  return render_element(data);
+}
+
+function render_thesis(element) {
+  var icon = '<span class="icon"><i class="fas fa-user-graduate"></i></span>';
+  var data = [icon + element['title'], render_tags(element)];
   return render_element(data);
 }
 
 function render_misc(element) {
-  var data = [element['title'], render_tags(element)];
+  var icon = '<span class="icon"><i class="far fa-question-circle"></i></span>';
+  var data = [icon + element['title'], render_tags(element)];
   return render_element(data);
 }
 

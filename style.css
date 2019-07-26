@@ -1,6 +1,6 @@
 body {
     font-family: 'Merriweather', serif;
-    color: #111111;
+    color: var(--dark-color);
     background-color: #FFFFFF;
 }
 
@@ -13,7 +13,11 @@ body {
 }
 
 a {
-    color: #111111;
+    color: var(--dark-color);
+}
+
+a:hover {
+    color: var(--highlight-color);
 }
 
 .tag {
@@ -21,16 +25,29 @@ a {
     font-size: 8px;
     margin: 2px;
     padding: 3px;
+    color: var(--dark-color);
     background-color: var(--background-color);
 }
 
 .tag:hover {
-    color: #111111;
+    color: var(--dark-color);
     background-color: var(--highlight-color);
+}
+
+.icon {
+    position: relative;
+    top: 3px;
+    right: 35px;
+}
+
+.icon i {
+    position: absolute;
+    z-index: 100;
 }
 
 
 :root {
+    --dark-color: #111111;
     --highlight-color: #4AD5CA;
-    --background-color: #F3F3F3; 
+    --background-color: #F3F3F3;
 }
