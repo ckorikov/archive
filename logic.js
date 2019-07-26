@@ -33,6 +33,24 @@ $(document).on('click', '.tag', function (e) {
   show_list($('#request').val() ? $('#request').val() : '');
 });
 
+$(document).on('click', '.qr', function (e) {
+  e.preventDefault();
+  $('tbody').empty();
+  var element = global_dataset[global_hash[e.target.id]];
+  var el = kjua({
+    text: element['url'],
+    fill: '#111111',
+    size: 400
+  });
+  $('tbody').append('<tr><td id="qrcode"><a href="#"></a></td></tr><tr><td id="qrcaption">' + element['title'] + '</td><tr>');
+  $('#qrcode a').append(el);
+});
+
+$(document).on('click', '#qrcode', function (e) {
+  e.preventDefault();
+  show_list('');
+});
+
 // Loaders
 
 function load_from_zotero() {
@@ -60,7 +78,6 @@ function load_from_local_storage() {
       global_hash[element['key']] = i;
       i++;
     });
-    console.log(global_dataset);
     show_list('');
   } else {
     load_from_zotero();
@@ -158,52 +175,55 @@ function render_title(element) {
   }
 }
 
+function render_qr(element) {
+  return '<a href="#" class="qr"><i class="fa fa-qrcode" id="' + element['key'] + '"></i></a>';
+}
+
 function render_blogPost(element) {
   var icon_type = element['websiteType'] == 'Habr' ? 'fas fa-heading' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_webpage(element) {
   var icon_type = element['websiteType'] == 'GitHub' ? 'fab fa-github' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_presentation(element) {
   var icon_type = element['presentationType'] == 'Lecture' ? 'fas fa-chalkboard-teacher' : 'fas fa-comments';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_conferencePaper(element) {
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_journalArticle(element) {
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_thesis(element) {
   var icon = '<span class="icon"><i class="fas fa-user-graduate"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_misc(element) {
   var icon = '<span class="icon"><i class="far fa-question-circle"></i></span>';
-  var data = [icon + render_title(element), render_tags(element)];
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_element(data) {
-  data.push("<i class='fa fa-qrcode' aria-hidden='true'></i>");
   return '<tr><td>' + data.join('</td><td>') + '</td></tr>'
 }
