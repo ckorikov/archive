@@ -1,5 +1,6 @@
 const zotero = 'https://api.zotero.org/users/4809962/';
 const api_key = 'hTvqMYvC4Bjhm4xGHqyCTSWv';
+const params = '?sort=date&limit=100';
 
 var global_hash = new Map();
 var global_dataset = new Array();
@@ -55,7 +56,7 @@ $(document).on('click', '#qrcode', function (e) {
 
 function load_from_zotero() {
   $.ajax({
-    url: zotero + 'publications/items?sort=date',
+    url: zotero + 'publications/items' + params,
     crossDomain: true,
     dataType: 'json',
     beforeSend: function (request) {
