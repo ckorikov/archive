@@ -51,6 +51,12 @@ a:hover {
     }
 }
 
+.loader {
+    font-size: 32px;
+    text-align: center;
+    border: none;
+}
+
 #qrcode {
     text-align: center;
 }
