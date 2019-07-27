@@ -45,6 +45,12 @@ a:hover {
     z-index: 100;
 }
 
+@-moz-document url-prefix() {
+    .icon {
+        top: -12px !important;
+    }
+}
+
 #qrcode {
     text-align: center;
 }
