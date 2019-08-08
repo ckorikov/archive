@@ -167,6 +167,7 @@ function show_list(req) {
       type == 'presentation' ? render_presentation(element) :
       type == 'conferencePaper' ? render_conferencePaper(element) :
       type == 'journalArticle' ? render_journalArticle(element) :
+      type == 'magazineArticle' ? render_magazineArticle(element) :
       type == 'thesis' ? render_thesis(element) :
       render_misc(element)
     );
@@ -218,6 +219,12 @@ function render_conferencePaper(element) {
 
 function render_journalArticle(element) {
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
+  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  return render_element(data);
+}
+
+function render_magazineArticle(element) {
+  var icon = '<span class="icon"><i class="fas fa-book-open"></i></span>';
   var data = [icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
