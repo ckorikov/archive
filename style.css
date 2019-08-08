@@ -97,6 +97,7 @@ tr:hover .meta span {
 
 #qrcaption {
     text-align: center;
+    background-color: var(--highlight-color);
 }
 
 #qrlink {
