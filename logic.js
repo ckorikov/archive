@@ -96,6 +96,15 @@ function process_publications(data, version) {
       process_tags(element['key']);
     }
   });
+  global_dataset.sort(function (a, b) {
+    var lex_sort = function (a, b) {
+      var a_data = a ? a.toLowerCase() : '';
+      var b_data = b ? b.toLowerCase() : '';
+      return ((a_data > b_data) ? -1 : ((a_data < b_data) ? 1 : 0));
+    };
+    return lex_sort(a['date'], b['date']) ||
+           lex_sort(a['title'], b['title']);
+  })
   localStorage['dataset'] = JSON.stringify(global_dataset);
   localStorage['version'] = version;
   show_list('');
@@ -141,8 +150,8 @@ function show_list(req) {
       'date',
       'language',
       'tags',
-      'tags',
       'creators.firstName',
+      'creators.lastName',
       'presentationType'
     ]
   };
