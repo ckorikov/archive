@@ -57,6 +57,23 @@ a:hover {
     border: none;
 }
 
+.page404 {
+    font-size: 32px;
+    text-align: center;
+    border: none;
+}
+
+.page404sub {
+    font-size: 18px;
+    text-align: center;
+    border: none;
+}
+
+.page404sub a {
+    border-bottom-style: dotted;
+}
+
+
 #qrcode {
     text-align: center;
 }
