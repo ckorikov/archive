@@ -67,7 +67,7 @@ function load_from_zotero() {
       request.setRequestHeader('Zotero-API-Key', api_key);
     },
     success: function (data, status, response) {
-      process_publications(data, response.getResponseHeader('Last-Modified-Version'));
+      prepare_new_data(data, response.getResponseHeader('Last-Modified-Version'));
     },
     error: function (response) {
       show_error('No data');
@@ -79,13 +79,13 @@ function load_from_local_storage() {
   if (localStorage['dataset']) {
     global_dataset = JSON.parse(localStorage['dataset']);
     fill_hashes();
-    action();
+    process_user();
   } else {
     load_from_zotero();
   }
 }
 
-function action() {
+function process_user() {
   let searchParams = new URLSearchParams(window.location.search)
   if (searchParams.has('d')) {
     const req = searchParams.get('d').toLowerCase();
@@ -111,8 +111,16 @@ function fill_hashes() {
   });
 }
 
-function process_publications(data, version) {
-  data.forEach(function (item) {
+function prepare_new_data(data, version) {
+  data.sort(function (a, b) {
+    var lexicographical_sort = function (a, b) {
+      var a_data = a ? a.toLowerCase() : '';
+      var b_data = b ? b.toLowerCase() : '';
+      return ((a_data > b_data) ? -1 : ((a_data < b_data) ? 1 : 0));
+    };
+    return lexicographical_sort(a['data']['date'], b['data']['date']) ||
+           lexicographical_sort(a['data']['title'], b['data']['title']);
+  }).forEach(function (item) {
     var element = item['data'];
     if (element['itemType'] != 'attachment') {
       element['tags'] = new Array();
@@ -122,18 +130,9 @@ function process_publications(data, version) {
       process_tags(element['key']);
     }
   });
-  global_dataset.sort(function (a, b) {
-    var lex_sort = function (a, b) {
-      var a_data = a ? a.toLowerCase() : '';
-      var b_data = b ? b.toLowerCase() : '';
-      return ((a_data > b_data) ? -1 : ((a_data < b_data) ? 1 : 0));
-    };
-    return lex_sort(a['date'], b['date']) ||
-      lex_sort(a['title'], b['title']);
-  })
   localStorage['dataset'] = JSON.stringify(global_dataset);
   localStorage['version'] = version;
-  action();
+  process_user();
 }
 
 function process_tags(key) {
@@ -149,7 +148,7 @@ function process_tags(key) {
         global_dataset[global_hash[key]]['tags'].push(tag_container['tag']);
       });
       localStorage['dataset'] = JSON.stringify(global_dataset);
-      action();
+      process_user();
     }
   });
 }
