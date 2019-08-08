@@ -103,7 +103,7 @@ function process_publications(data, version) {
       return ((a_data > b_data) ? -1 : ((a_data < b_data) ? 1 : 0));
     };
     return lex_sort(a['date'], b['date']) ||
-           lex_sort(a['title'], b['title']);
+      lex_sort(a['title'], b['title']);
   })
   localStorage['dataset'] = JSON.stringify(global_dataset);
   localStorage['version'] = version;
@@ -191,53 +191,61 @@ function render_qr(element) {
 }
 
 function render_blogPost(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon_type = element['websiteType'] == 'Habr' ? 'fas fa-heading' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_webpage(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon_type = element['websiteType'] == 'GitHub' ? 'fab fa-github' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_presentation(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon_type = element['presentationType'] == 'Lecture' ? 'fas fa-chalkboard-teacher' : 'fas fa-comments';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_conferencePaper(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_journalArticle(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_magazineArticle(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-book-open"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_thesis(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-user-graduate"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_misc(element) {
+  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
   var icon = '<span class="icon"><i class="far fa-question-circle"></i></span>';
-  var data = [icon + render_title(element), render_tags(element), render_qr(element)];
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
