@@ -3,6 +3,7 @@ const api_key = 'hTvqMYvC4Bjhm4xGHqyCTSWv';
 const params = '?sort=date&limit=100';
 
 var global_hash = new Map();
+var global_links_hash = new Map();
 var global_dataset = new Array();
 
 $(document).ready(function () {
@@ -25,13 +26,13 @@ $(document).ready(function () {
 });
 
 $('#request').on('keyup', function () {
-  show_list($('#request').val() ? $('#request').val() : '');
+  show_list();
 });
 
 $(document).on('click', '.tag', function (e) {
   e.preventDefault();
   $('#request').val($(e.target).text() + ' ');
-  show_list($('#request').val() ? $('#request').val() : '');
+  show_list();
 });
 
 $(document).on('click', '.qr', function (e) {
@@ -43,13 +44,16 @@ $(document).on('click', '.qr', function (e) {
     fill: '#111111',
     size: 400
   });
-  $('tbody').append('<tr><td id="qrcode"><a href="#"></a></td></tr><tr><td id="qrcaption">' + element['title'] + '</td><tr>');
+  let link = 'https://korikov.cc/?d='+get_human_key(element);
+  $('tbody').append('<tr><td id="qrcode"><a href="#"></a></td></tr>' +
+                    '<tr><td id="qrcaption">' + element['title'] + '</td><tr>'+
+                    '<tr><td id="qrlink"><a href="'+link+'">' + link + '</a></td><tr>');
   $('#qrcode a').append(el);
 });
 
 $(document).on('click', '#qrcode', function (e) {
   e.preventDefault();
-  show_list('');
+  show_list();
 });
 
 // Loaders
@@ -74,25 +78,47 @@ function load_from_zotero() {
 function load_from_local_storage() {
   if (localStorage['dataset']) {
     global_dataset = JSON.parse(localStorage['dataset']);
-    var i = 0;
-    global_dataset.forEach(function (element) {
-      global_hash[element['key']] = i;
-      i++;
-    });
-    show_list('');
+    fill_hashes();
+    action();
   } else {
     load_from_zotero();
   }
 }
 
+function action() {
+  let searchParams = new URLSearchParams(window.location.search)
+  if (searchParams.has('d')) {
+    const req = searchParams.get('d').toLowerCase();
+    if (req in global_links_hash && 'url' in global_dataset[global_links_hash[req]]) {
+      window.location.replace(global_dataset[global_links_hash[req]]['url']);
+    }
+  }
+  if (searchParams.has('q')) {
+    $('#request').val(searchParams.get('q'));
+  }
+  show_list()
+}
+
 // Data processing
+
+function fill_hashes() {
+  var i = 0;
+  global_dataset.forEach(function (element) {
+    var key = get_human_key(element);
+    global_links_hash[key] = i;
+    global_hash[element['key']] = i;
+    i++;
+  });
+}
 
 function process_publications(data, version) {
   data.forEach(function (item) {
     var element = item['data'];
     if (element['itemType'] != 'attachment') {
       element['tags'] = new Array();
-      global_hash[element['key']] = global_dataset.push(element) - 1;
+      const idx = global_dataset.push(element) - 1;
+      global_links_hash[get_human_key(element)] = idx;
+      global_hash[element['key']] = idx;
       process_tags(element['key']);
     }
   });
@@ -107,7 +133,7 @@ function process_publications(data, version) {
   })
   localStorage['dataset'] = JSON.stringify(global_dataset);
   localStorage['version'] = version;
-  show_list('');
+  action();
 }
 
 function process_tags(key) {
@@ -123,7 +149,7 @@ function process_tags(key) {
         global_dataset[global_hash[key]]['tags'].push(tag_container['tag']);
       });
       localStorage['dataset'] = JSON.stringify(global_dataset);
-      show_list('');
+      action();
     }
   });
 }
@@ -135,8 +161,9 @@ function show_error(msg) {
   $('tbody').append('<tr><td>' + msg + '</td></tr>');
 }
 
-function show_list(req) {
-  var options = {
+function show_list() {
+  const req = $('#request').val() ? $('#request').val() : '';
+  const options = {
     shouldSort: true,
     threshold: 0.4,
     location: 0,
@@ -156,11 +183,11 @@ function show_list(req) {
     ]
   };
 
-  var fuse = new Fuse(global_dataset, options);
-  var result = req ? fuse.search(req) : global_dataset;
+  let fuse = new Fuse(global_dataset, options);
+  const result = req ? fuse.search(req) : global_dataset;
   $('tbody').empty();
   result.forEach(function (element) {
-    var type = element['itemType'];
+    const type = element['itemType'];
     $('tbody').append(
       type == 'blogPost' ? render_blogPost(element) :
       type == 'webpage' ? render_webpage(element) :
@@ -191,7 +218,7 @@ function render_qr(element) {
 }
 
 function render_blogPost(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon_type = element['websiteType'] == 'Habr' ? 'fas fa-heading' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
@@ -199,7 +226,7 @@ function render_blogPost(element) {
 }
 
 function render_webpage(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon_type = element['websiteType'] == 'GitHub' ? 'fab fa-github' : 'fas fa-globe';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
@@ -207,7 +234,7 @@ function render_webpage(element) {
 }
 
 function render_presentation(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon_type = element['presentationType'] == 'Lecture' ? 'fas fa-chalkboard-teacher' : 'fas fa-comments';
   var icon = '<span class="icon"><i class="' + icon_type + '"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
@@ -215,35 +242,35 @@ function render_presentation(element) {
 }
 
 function render_conferencePaper(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_journalArticle(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-file-alt"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_magazineArticle(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-book-open"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_thesis(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-user-graduate"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
 
 function render_misc(element) {
-  var meta = '<div class="meta"><span>' + element['date'].split('/')[0] + '</span></div>';
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="far fa-question-circle"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
@@ -251,4 +278,63 @@ function render_misc(element) {
 
 function render_element(data) {
   return '<tr><td>' + data.join('</td><td>') + '</td></tr>'
+}
+
+// Tools
+
+function get_year(element) {
+  return element['date'].split('/')[0];
+}
+
+function rus_to_latin(str) {
+  var ru = {
+      'а': 'a',
+      'б': 'b',
+      'в': 'v',
+      'г': 'g',
+      'д': 'd',
+      'е': 'e',
+      'ё': 'e',
+      'ж': 'j',
+      'з': 'z',
+      'и': 'i',
+      'к': 'k',
+      'л': 'l',
+      'м': 'm',
+      'н': 'n',
+      'о': 'o',
+      'п': 'p',
+      'р': 'r',
+      'с': 's',
+      'т': 't',
+      'у': 'u',
+      'ф': 'f',
+      'х': 'h',
+      'ц': 'c',
+      'ч': 'ch',
+      'ш': 'sh',
+      'щ': 'shch',
+      'ы': 'y',
+      'э': 'e',
+      'ю': 'u',
+      'я': 'ya'
+    },
+    n_str = [];
+
+  str = str.replace(/[ъь]+/g, '').replace(/й/g, 'i');
+
+  for (var i = 0; i < str.length; ++i) {
+    n_str.push(
+      ru[str[i]] ||
+      ru[str[i].toLowerCase()] == undefined && str[i] ||
+      ru[str[i].toLowerCase()].replace(/^(.)/, function (match) {
+        return match.toUpperCase()
+      })
+    );
+  }
+  return n_str.join('');
+}
+
+function get_human_key(element) {
+  return get_year(element) + '-' + (rus_to_latin(element['title']).toLowerCase().replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-'));
 }
