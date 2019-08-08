@@ -58,7 +58,7 @@ a:hover {
     visibility: hidden;
 }
 
-tr:hover .meta span{
+tr:hover .meta span {
     visibility: visible;
 }
 
@@ -97,6 +97,11 @@ tr:hover .meta span{
 
 #qrcaption {
     text-align: center;
+}
+
+#qrlink {
+    text-align: center;
+    font-size: 12px;
 }
 
 :root {
