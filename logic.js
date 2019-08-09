@@ -44,7 +44,7 @@ $(document).on('click', '.qr', function (e) {
     fill: '#111111',
     size: 400
   });
-  let link = 'https://korikov.cc/?d='+get_human_key(element);
+  var link = 'https://korikov.cc/?d='+get_human_key(element);
   $('tbody').append('<tr><td id="qrcode"><a href="#"></a></td></tr>' +
                     '<tr><td id="qrcaption">' + element['title'] + '</td><tr>'+
                     '<tr><td id="qrlink"><a href="'+link+'">' + link + '</a></td><tr>');
@@ -86,7 +86,7 @@ function load_from_local_storage() {
 }
 
 function process_user() {
-  let searchParams = new URLSearchParams(window.location.search)
+  var searchParams = new URLSearchParams(window.location.search)
   if (searchParams.has('d')) {
     const req = searchParams.get('d').toLowerCase();
     if (req in global_links_hash && 'url' in global_dataset[global_links_hash[req]]) {
@@ -182,7 +182,7 @@ function show_list() {
     ]
   };
 
-  let fuse = new Fuse(global_dataset, options);
+  var fuse = new Fuse(global_dataset, options);
   const result = req ? fuse.search(req) : global_dataset;
   $('tbody').empty();
   result.forEach(function (element) {
