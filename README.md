@@ -1,5 +1,7 @@
 # Archive
 
+[![Build Status](https://travis-ci.com/ckorikov/archive.svg?branch=master)](https://travis-ci.com/ckorikov/archive)
+
 This is an archive of published works which is implemented with the help of [Zotero API](https://www.zotero.org/support/dev/web_api/v3/start). Feel free to use it and contribute.
 
 See example: [https://korikov.cc](https://korikov.cc)
