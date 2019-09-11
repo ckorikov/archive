@@ -39,12 +39,12 @@ $(document).on('click', '.qr', function (e) {
   e.preventDefault();
   $('tbody').empty();
   var element = global_dataset[global_hash[e.target.id]];
+  var link = 'https://korikov.cc/?d='+get_human_key(element);
   var el = kjua({
-    text: element['url'],
+    text: link,
     fill: '#111111',
     size: 400
   });
-  var link = 'https://korikov.cc/?d='+get_human_key(element);
   $('tbody').append('<tr><td id="qrcode"><a href="#"></a></td></tr>' +
                     '<tr><td id="qrcaption">' + element['title'] + '</td><tr>'+
                     '<tr><td id="qrlink"><a href="'+link+'">' + link + '</a></td><tr>');
