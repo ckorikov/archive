@@ -195,6 +195,7 @@ function show_list() {
       type == 'journalArticle' ? render_journalArticle(element) :
       type == 'magazineArticle' ? render_magazineArticle(element) :
       type == 'thesis' ? render_thesis(element) :
+      type == 'videoRecording' ? render_video(element) :
       render_misc(element)
     );
   });
@@ -264,6 +265,13 @@ function render_magazineArticle(element) {
 function render_thesis(element) {
   var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
   var icon = '<span class="icon"><i class="fas fa-user-graduate"></i></span>';
+  var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
+  return render_element(data);
+}
+
+function render_video(element) {
+  var meta = '<div class="meta"><span>' + get_year(element) + '</span></div>';
+  var icon = '<span class="icon"><i class="fas fa-video"></i></span>';
   var data = [meta + icon + render_title(element), render_tags(element), render_qr(element)];
   return render_element(data);
 }
