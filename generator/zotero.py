@@ -74,7 +74,11 @@ class Item:
         return [" ".join((author['firstName'], author['lastName'])) for author in self.data['creators']]
 
     @property
-    def tag(self):
+    def tags(self):
+        return [tag_item['tag'] for tag_item in self.data['tags']]
+
+    @property
+    def identifier(self):
         date = self.year
         title = self.title
         title = process(title)
@@ -115,6 +119,7 @@ class Zotero:
         if not self.__items:
             self.__handle.add_parameters(sort='date')
             self.__items = self.__handle.publications()
+            self.__items = [self.__handle.item(item['data']['key']) for item in self.__items]
             self.__items = [Item(item['data']) for item in self.__items]
 
     def get_items(self):
