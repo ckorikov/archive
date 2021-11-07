@@ -15,7 +15,15 @@ def main():
     logging.info('Connected to Zotero')
 
     logging.info('Started index page generation')
-    index = Index(work_dir)
+
+    topics = {
+        'science': {'phd', 'casimir'},
+        'teaching': {'polytech', 'jiungsu'},
+        'fun': {'fun'},
+        'all': None
+    }
+
+    index = Index(topics, work_dir)
     index.fill(zotero)
     index.save()
 
@@ -28,5 +36,6 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         logging.error(f'Error occurred {e}')
+        raise
     finally:
         logging.info('Finished')
