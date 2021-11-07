@@ -17,9 +17,10 @@ class Index:
         self.template = Template(template_path)
 
     def fill(self, zotero):
-        for item in zotero.get_items():
+        for item in zotero.get_items_without_attachments():
             logging.info(f'Processing `{item.title}`')
-            self.content += Index.format_element(title=item.title, year=item.year, tag=item.tag)
+            print(item.data)
+            self.content += Index.format_element(title=item.title, year=item.year, identifier=item.identifier, tags=item.tags)
 
         self.content = self.template.safe_substitute(content=self.content)
 
@@ -28,9 +29,15 @@ class Index:
             return f.write(self.content)
 
     @staticmethod
-    def format_element(title, year, tag, icon='fas fa-globe'):
-        return f'<tr id="{tag}"><td>' \
+    def format_element(title, year, identifier, tags, icon='fas fa-globe'):
+        tags_string = "".join([f'<a href="#" class="tag">{tag}</a>' for tag in tags])
+        return f'<tr id="{identifier}">'\
+               f'<td>' \
                f'<div class="meta"><span>{year}</span></div>' \
                f'<span class="icon"><i class="{icon}"></i></span>' \
                f'<a href="#">{title}</a>' \
-               f'</td></tr>'
+               f'</td>' \
+               f'<td>' \
+               f'{tags_string}' \
+               f'</td>' \
+               f'</tr>'
