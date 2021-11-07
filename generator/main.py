@@ -1,13 +1,32 @@
-import zotero as zot
+import logging
+
+import environment as env
+from index import Index
+from zotero import Zotero
 
 
 def main():
-    zotero = zot.Zotero(api_key='')
+    logging.info('Started static content generator')
 
-    for item in zotero.get_items():
-        print(item.title, item.date)
-        print(item.tag)
+    work_dir = env.get_work_dir()
+    logging.info(f'Set work directory `{work_dir}`')
+
+    zotero = Zotero(api_key='hTvqMYvC4Bjhm4xGHqyCTSWv', debug=True)
+    logging.info('Connected to Zotero')
+
+    logging.info('Started index page generation')
+    index = Index(work_dir)
+    index.fill(zotero)
+    index.save()
 
 
 if __name__ == '__main__':
-    main()
+    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                        encoding='utf-8',
+                        level=logging.INFO)
+    try:
+        main()
+    except Exception as e:
+        logging.error(f'Error occurred {e}')
+    finally:
+        logging.info('Finished')
