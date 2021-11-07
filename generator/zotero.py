@@ -121,9 +121,16 @@ class Zotero:
         self.__try_fetch()
         return self.__items
 
+    def get_items_without_attachments(self):
+        return self.get_items_not_type(item_type='attachment')
+
     def get_items_type(self, item_type):
         self.__try_fetch()
         return [item for item in self.__items if item.data['itemType'] == item_type]
+
+    def get_items_not_type(self, item_type):
+        self.__try_fetch()
+        return [item for item in self.__items if item.data['itemType'] != item_type]
 
     def get_presentations(self):
         return self.get_items_type(item_type='presentation')
