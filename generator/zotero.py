@@ -1,3 +1,6 @@
+import pickle
+from os.path import exists
+
 import requests
 from pyzotero import zotero
 
@@ -88,22 +91,38 @@ class Item:
 
 
 class Zotero:
-    def __init__(self, api_key, pool_size=4):
+    def __init__(self, api_key, debug=False):
+        self.__debug_mode = debug
         self.__handle = zotero.Zotero(_LIBRARY_ID, _LIBRARY_TYPE, api_key)
         self.__items = None
-        self.__pool = multiprocessing.Pool(pool_size)
+
+    def __get_debug_data(self, debug_file='debug.data'):
+        if self.__debug_mode and exists(debug_file):
+            with open(debug_file, 'rb') as f:
+                self.__items = pickle.load(f)
+        else:
+            self.__fetch()
+            with open(debug_file, 'wb') as f:
+                pickle.dump(self.__items, f)
+
+    def __try_fetch(self):
+        if self.__debug_mode:
+            self.__get_debug_data()
+        else:
+            self.__fetch()
 
     def __fetch(self):
         if not self.__items:
+            self.__handle.add_parameters(sort='date')
             self.__items = self.__handle.publications()
             self.__items = [Item(item['data']) for item in self.__items]
 
     def get_items(self):
-        self.__fetch()
+        self.__try_fetch()
         return self.__items
 
     def get_items_type(self, item_type):
-        self.__fetch()
+        self.__try_fetch()
         return [item for item in self.__items if item.data['itemType'] == item_type]
 
     def get_presentations(self):
