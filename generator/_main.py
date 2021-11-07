@@ -1,5 +1,5 @@
+import pdf2image
 import requests
-from pdf2image import convert_from_bytes
 from pyzotero import zotero
 
 library_id = 4809962
@@ -23,7 +23,7 @@ for item in items:
     print(url)
     r = requests.get(url)
 
-    images = convert_from_bytes(r.content, dpi=100)
+    images = pdf2image.convert_from_bytes(r.content, dpi=100)
 
     with open("CFXSID8E.html", 'w') as f:
         f.write("""
