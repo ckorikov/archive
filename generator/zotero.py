@@ -1,5 +1,7 @@
+import logging
 import pickle
 from os.path import exists
+from typing import Optional
 
 import requests
 from pyzotero import zotero
@@ -75,7 +77,7 @@ class Item:
 
     @property
     def tags(self):
-        return [tag_item['tag'] for tag_item in self.data['tags']]
+        return {tag_item['tag'] for tag_item in self.data['tags']}
 
     @property
     def identifier(self):
@@ -126,16 +128,32 @@ class Zotero:
         self.__try_fetch()
         return self.__items
 
-    def get_items_without_attachments(self):
-        return self.get_items_not_type(item_type='attachment')
+    def get_items_filtered(self,
+                           item_types_any: Optional[set] = None,
+                           item_tags_any: Optional[set] = None,
+                           with_attachments=True):
+        if item_types_any is None:
+            item_types_any = {}
 
-    def get_items_type(self, item_type):
+        if item_tags_any is None:
+            item_tags_any = {}
+
+        logging.info(
+            f'Get Zotero items filtered by type={item_types_any}, '
+            f'tags={item_tags_any} with attachments={with_attachments}')
+
         self.__try_fetch()
-        return [item for item in self.__items if item.data['itemType'] == item_type]
 
-    def get_items_not_type(self, item_type):
-        self.__try_fetch()
-        return [item for item in self.__items if item.data['itemType'] != item_type]
+        def predicate(cond_type: str, cond_tags: set):
+            if not with_attachments and cond_type == 'attachment':
+                return False
+            if item_tags_any and cond_tags.isdisjoint(item_tags_any):
+                return False
+            if item_types_any and cond_type not in item_types_any:
+                return False
+            return True
 
-    def get_presentations(self):
-        return self.get_items_type(item_type='presentation')
+        return [item for item in self.__items if predicate(item.data['itemType'], item.tags)]
+
+    def get_presentations(self, tags=None):
+        return self.get_items_filtered(item_types_any={'presentation'}, item_tags_any=tags, with_attachments=False)
