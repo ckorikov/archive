@@ -3,6 +3,7 @@ from string import Template
 from typing import Optional
 
 import environment as env
+from slides import Slides
 
 
 class Index:
@@ -26,6 +27,10 @@ class Index:
                                          year=item.year,
                                          identifier=item.identifier,
                                          tags=item.tags)
+            if item.kind == 'presentation':
+                slides = Slides(item, self.work_dir)
+                slides.generate()
+                break
             dictionary.append(item.to_dict())
         return text, dictionary
 
@@ -50,7 +55,7 @@ class Index:
                f'<td>' \
                f'<div class="meta"><span>{year}</span></div>' \
                f'<span class="icon"><i class="{icon}"></i></span>' \
-               f'<a href="javascript:void(0)">{title}</a>' \
+               f'<a href="{identifier}.html">{title}</a>' \
                f'</td>' \
                f'<td>' \
                f'{tags_string}' \
