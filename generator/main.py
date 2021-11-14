@@ -16,14 +16,7 @@ def main():
 
     logging.info('Started index page generation')
 
-    topics = {
-        'science': {'phd', 'casimir'},
-        'teaching': {'polytech', 'jiungsu'},
-        'fun': {'fun'},
-        'all': None
-    }
-
-    index = Index(topics, work_dir)
+    index = Index(work_dir)
     index.fill(zotero)
     index.save()
 
