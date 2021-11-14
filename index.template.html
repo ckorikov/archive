@@ -33,12 +33,6 @@
         <div class='column column-60 column-offset-20'><input id='request' type='text'></div>
     </div>
 
-    <div class='row'>
-        <div class='column column-60 column-offset-20'>
-            $controllers
-        </div>
-    </div>
-
     <div class='row' style='padding-top:0.5cm'>
         <div class='column column-20'></div>
         $content
@@ -49,11 +43,52 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.4.5/fuse.min.js'></script>
 <script type="text/javascript">
-    $(".topic-controller").on("click", function () {
-        const id = $(this).attr("id")
-        console.log(id);
-        $(".work-list").hide();
-        $("#" + id + "-list").show();
+    const data = $data;
+    const options = {
+        shouldSort: true,
+        threshold: 0.4,
+        location: 0,
+        distance: 100,
+        useExtendedSearch: true,
+        maxPatternLength: 32,
+        minMatchCharLength: 2,
+        keys: [
+            'date',
+            'title',
+            'creators',
+            'tags'
+        ]
+    };
+
+    $(document).on('click', '.tag', function (e) {
+        e.preventDefault();
+        $('#request').val($(e.target).text() + ' ');
+    });
+
+    const rows = $('table tbody  tr').get();
+    let global_hash = new Map();
+    rows.forEach(function (element) {
+        global_hash[element.id] = element;
+    });
+
+    $('#request').on('keyup', function () {
+        const req = $('#request').val();
+        if (req) {
+            let fuse = new Fuse(data, options);
+            const result = fuse.search(req);
+
+            $('table tr').remove();
+
+            result.forEach(function (element) {
+                console.log(element);
+                const d = global_hash['id-' + element.id];
+                $('table').children('tbody').append(d);
+            });
+        } else {
+            rows.forEach(function (element) {
+                $('table').children('tbody').append(element);
+            });
+        }
     });
 </script>
 <!-- Yandex.Metrika counter -->

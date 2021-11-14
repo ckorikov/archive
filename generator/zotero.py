@@ -34,8 +34,14 @@ def transliterate(text):
 
 def process(text):
     text = text.lower()
+    text = text.replace('.', '-')
     text = transliterate(text)
+    text = text.encode("ascii", "ignore")
+    text = text.decode()
     text = text.replace('_', '-')
+    text = text.replace('--', '-')
+    text = text.lstrip('-')
+    text = text.rstrip('-')
     return text
 
 
@@ -91,6 +97,15 @@ class Item:
         self.__fetch()
         if self.__file:
             return self.__file.content
+
+    def to_dict(self):
+        return {
+            "id": self.identifier,
+            "date": self.date,
+            "title": self.title,
+            "creators": list(self.creators),
+            "tags": list(self.tags),
+        }
 
     def __repr__(self):
         return str(self.data)
