@@ -50,10 +50,28 @@ class Item:
         self.data = data
         self.__file = None
 
+    def __get_cached(self, filename):
+        cache_file = f'cache/{filename}'
+        if exists(cache_file):
+            logging.info(f'Found cached file `{filename}`')
+            with open(cache_file, 'rb') as f:
+                return pickle.load(f)
+
+    def __cache_file(self, filename, file):
+        cache_file = f'cache/{filename}'
+        if not exists(cache_file):
+            logging.info(f'Cache file `{filename}`')
+            with open(cache_file, 'wb') as f:
+                pickle.dump(file, f)
+
     def __fetch(self):
         if not self.__file:
             url = self.data['url']
-            self.__file = requests.get(url)
+            self.__file = self.__get_cached(self.identifier)
+            if not self.__file:
+                logging.info(f'Fetching file `{url}`')
+                self.__file = requests.get(url)
+                self.__cache_file(self.identifier, self.__file)
 
     @property
     def title(self):
@@ -91,6 +109,14 @@ class Item:
         title = self.title
         title = process(title)
         return f'{date}-{title}'
+
+    @property
+    def kind(self):
+        return self.data['itemType']
+
+    @property
+    def url(self):
+        return self.data['url']
 
     @property
     def file(self):
@@ -134,9 +160,12 @@ class Zotero:
 
     def __fetch(self):
         if not self.__items:
+            logging.info(f'Fetching data from Zotero')
             self.__handle.add_parameters(sort='date')
             self.__items = self.__handle.publications()
-            self.__items = [self.__handle.item(item['data']['key']) for item in self.__items]
+            for i, item in enumerate(self.__items):
+                logging.info(f'Fetching details for {i}/{len(self.__items)} `{item["data"]["key"]}`')
+                self.__items[i] = self.__handle.item(item['data']['key'])
             self.__items = [Item(item['data']) for item in self.__items]
 
     def get_items(self):
