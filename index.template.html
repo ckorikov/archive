@@ -63,6 +63,7 @@
     $(document).on('click', '.tag', function (e) {
         e.preventDefault();
         $('#request').val($(e.target).text() + ' ');
+        search()
     });
 
     const rows = $('table tbody  tr').get();
@@ -71,7 +72,8 @@
         global_hash[element.id] = element;
     });
 
-    $('#request').on('keyup', function () {
+
+    function search() {
         const req = $('#request').val();
         if (req) {
             let fuse = new Fuse(data, options);
@@ -89,6 +91,11 @@
                 $('table').children('tbody').append(element);
             });
         }
+
+    }
+
+    $('#request').on('keyup', function () {
+        search();
     });
 </script>
 <!-- Yandex.Metrika counter -->
