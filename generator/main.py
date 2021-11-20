@@ -1,7 +1,9 @@
 import logging
+import multiprocessing
 
 import layout
 from index import Index
+from slides import Slides
 from zotero import Zotero
 
 
@@ -16,6 +18,12 @@ def prepare_directories():
     return output_dir, root_dir
 
 
+def generate_slide(presentations, output_dir, root_dir):
+    for p in presentations:
+        slides = Slides(p, output_dir, root_dir)
+        slides.generate()
+
+
 def main():
     logging.info('Started static content generator')
     output_dir, root_dir = prepare_directories()
@@ -27,6 +35,8 @@ def main():
     index = Index(output_dir, root_dir)
     index.fill(zotero)
     index.save()
+
+    generate_slide(index.presentations, output_dir, root_dir)
 
 
 if __name__ == '__main__':

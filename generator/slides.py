@@ -54,10 +54,17 @@ class Slides:
     def generate(self):
         if not os.path.exists(f'{self.output_dir}/data'):
             os.mkdir(f'{self.output_dir}/data')
+        if 'pdf' not in self.__item.url:
+            logging.warning(f'URL is not a path to pdf file for `{self.__item.title}`')
+            return
         logging.info(f'Downloading file for `{self.__item.title}`')
         data = self.__item.file
         logging.info(f'Received file for `{self.__item.title}`')
-        number_of_pages = self.__pdf_to_images(data, output=f'{self.output_dir}/data/{self.__item.identifier}')
+        try:
+            number_of_pages = self.__pdf_to_images(data, output=f'{self.output_dir}/data/{self.__item.identifier}')
+        except Exception:
+            logging.warning(f'Skip `{self.__item.title}`')
+            return
         self.__generate_slides(f'{self.output_dir}/data/{self.__item.identifier}', number_of_pages)
         self.save(self.__item.identifier)
 
