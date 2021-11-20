@@ -139,6 +139,8 @@ class Item:
 
 class Zotero:
     def __init__(self, api_key, debug=False):
+        mode_str = 'debug' if debug else 'normal'
+        logging.info(f'Connecting to Zotero in {mode_str} mode')
         self.__debug_mode = debug
         self.__handle = zotero.Zotero(_LIBRARY_ID, _LIBRARY_TYPE, api_key)
         self.__items = None

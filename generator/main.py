@@ -5,18 +5,25 @@ from index import Index
 from zotero import Zotero
 
 
+def prepare_directories():
+    output_dir = env.get_output_dir()
+    logging.info(f'Output directory `{output_dir}`')
+    root_dir = env.get_root_dir()
+    logging.info(f'Root directory `{root_dir}`')
+
+    assert output_dir != root_dir, 'Run generator in the source directory is prohibited'
+
+    return output_dir, root_dir
+
+
 def main():
     logging.info('Started static content generator')
-
-    work_dir = env.get_work_dir()
-    logging.info(f'Set work directory `{work_dir}`')
+    output_dir, root_dir = prepare_directories()
 
     zotero = Zotero(api_key='hTvqMYvC4Bjhm4xGHqyCTSWv', debug=True)
-    logging.info('Connected to Zotero')
 
     logging.info('Started index page generation')
-
-    index = Index(work_dir)
+    index = Index(output_dir)
     index.fill(zotero)
     index.save()
 
