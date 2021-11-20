@@ -41,10 +41,13 @@ class Slides:
         tags = [f'<a href="#">#{tag}</a>' for tag in self.__item.tags]
         tags = " ".join(tags)
 
+        counter = f'{n} slide' if n == 1 else f'{n} slides'
+
         self.content = self.template.safe_substitute(title=self.__item.title,
                                                      date=self.__item.date,
                                                      author=authors,
                                                      tags=tags,
+                                                     counter=counter,
                                                      slides=slides)
 
     def generate(self):
