@@ -4,20 +4,21 @@ from string import Template
 
 import pdf2image
 
-import environment as env
+import layout as env
 
 
 class Slides:
-    def __init__(self, item, work_dir, filename='slides.template.html'):
+    def __init__(self, item, output_dir, root_dir, filename='slides.template.html'):
         logging.info(f'Create slides generator for `{item.title}`')
         self.__item = item
-        self.work_dir = work_dir
+        self.output_dir = output_dir
+        self.root_dir = root_dir
         self.content = ''
 
-        template_path = env.get_template(work_dir, filename)
+        template_path = env.get_template(f'{root_dir}/templates', filename)
 
         if not template_path:
-            raise ValueError(f'Cannot find template `{filename}` in `{work_dir}`')
+            raise ValueError(f'Cannot find template `{filename}` in `{root_dir}/templates`')
 
         self.template = Template(template_path)
 
@@ -51,13 +52,15 @@ class Slides:
                                                      slides=slides)
 
     def generate(self):
+        if not os.path.exists(f'{self.output_dir}/data'):
+            os.mkdir(f'{self.output_dir}/data')
         logging.info(f'Downloading file for `{self.__item.title}`')
         data = self.__item.file
         logging.info(f'Received file for `{self.__item.title}`')
-        number_of_pages = self.__pdf_to_images(data, output=f'{self.work_dir}/data/{self.__item.identifier}')
-        self.__generate_slides(f'data/{self.__item.identifier}', number_of_pages)
+        number_of_pages = self.__pdf_to_images(data, output=f'{self.output_dir}/data/{self.__item.identifier}')
+        self.__generate_slides(f'{self.output_dir}/data/{self.__item.identifier}', number_of_pages)
         self.save(self.__item.identifier)
 
     def save(self, name):
-        with open(f'{self.work_dir}/{name}.html', 'w') as f:
+        with open(f'{self.output_dir}/data/{name}/index.html', 'w') as f:
             return f.write(self.content)

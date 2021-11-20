@@ -2,19 +2,20 @@ import logging
 from string import Template
 from typing import Optional
 
-import environment as env
+import layout as env
 from slides import Slides
 
 
 class Index:
-    def __init__(self, work_dir, filename='index.template.html'):
-        self.work_dir = work_dir
+    def __init__(self, output_dir, root_dir, filename='index.template.html'):
+        self.output_dir = output_dir
+        self.root_dir = root_dir
         self.content = ''
 
-        template_path = env.get_template(work_dir, filename)
+        template_path = env.get_template(f'{root_dir}/templates', filename)
 
         if not template_path:
-            raise ValueError(f'Cannot find template `{filename}` in `{work_dir}`')
+            raise ValueError(f'Cannot find template `{filename}` in `{root_dir}/templates`')
 
         self.template = Template(template_path)
 
@@ -28,7 +29,7 @@ class Index:
                                          identifier=item.identifier,
                                          tags=item.tags)
             if item.kind == 'presentation':
-                slides = Slides(item, self.work_dir)
+                slides = Slides(item, self.output_dir, self.root_dir)
                 slides.generate()
                 break
             dictionary.append(item.to_dict())
@@ -40,7 +41,7 @@ class Index:
         self.content = self.template.safe_substitute(content=content, data=dictionary)
 
     def save(self):
-        with open(f'{self.work_dir}/index.html', 'w') as f:
+        with open(f'{self.output_dir}/index.html', 'w') as f:
             return f.write(self.content)
 
     @staticmethod
@@ -55,7 +56,7 @@ class Index:
                f'<td>' \
                f'<div class="meta"><span>{year}</span></div>' \
                f'<span class="icon"><i class="{icon}"></i></span>' \
-               f'<a href="{identifier}.html">{title}</a>' \
+               f'<a href="data/{identifier}/index.html">{title}</a>' \
                f'</td>' \
                f'<td>' \
                f'{tags_string}' \
