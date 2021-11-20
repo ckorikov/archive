@@ -8,25 +8,23 @@
 
                     <link rel="stylesheet" href="reveal.js-master/dist/reset.css">
                     <link rel="stylesheet" href="reveal.js-master/dist/reveal.css">
-                    <link rel="stylesheet" href="reveal.js-master/dist/theme/black.css">
+                    <link rel="stylesheet" href="reveal.js-master/dist/theme/white.css">
 
                     <!-- Theme used for syntax highlighted code -->
                     <link rel="stylesheet" href="reveal.js-master/plugin/highlight/monokai.css">
+                    <style>
+                        .reveal {
+                            font-family: 'Merriweather', serif;
+                        }
+                    </style>
                 </head>
                 <body>
                     <div class="reveal">
                         <div class="slides">
-                            <section>
-                                <h3>$title</h3>
-                                <p>
-                                    <small>Created by $author</small>
-                                </p>
-                                <p>
-                                    <small>$date</small>
-                                </p>
-                                <p>
+                            <section class="center">
                                     <small style="font-size: small">$tags</small>
-                                </p>
+                                <h3>$title</h3>
+                                <small style="font-size: small">$date &#9679; $counter </small>
                             </section>
                             $slides
                         </div>
