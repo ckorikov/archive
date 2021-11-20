@@ -3,13 +3,13 @@ from string import Template
 from typing import Optional
 
 import layout as env
-from slides import Slides
 
 
 class Index:
     def __init__(self, output_dir, root_dir, filename='index.template.html'):
         self.output_dir = output_dir
         self.root_dir = root_dir
+        self.presentations = []
         self.content = ''
 
         template_path = env.get_template(f'{root_dir}/templates', filename)
@@ -29,9 +29,7 @@ class Index:
                                          identifier=item.identifier,
                                          tags=item.tags)
             if item.kind == 'presentation':
-                slides = Slides(item, self.output_dir, self.root_dir)
-                slides.generate()
-                break
+                self.presentations.append(item)
             dictionary.append(item.to_dict())
         return text, dictionary
 
