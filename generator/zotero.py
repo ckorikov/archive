@@ -138,14 +138,16 @@ class Item:
 
 
 class Zotero:
-    def __init__(self, api_key, debug=False):
+    def __init__(self, api_key, debug=False, output_dir='.'):
         mode_str = 'debug' if debug else 'normal'
         logging.info(f'Connecting to Zotero in {mode_str} mode')
+        self.__output_dir = output_dir
         self.__debug_mode = debug
         self.__handle = zotero.Zotero(_LIBRARY_ID, _LIBRARY_TYPE, api_key)
         self.__items = None
 
     def __get_debug_data(self, debug_file='debug.data'):
+        debug_file = f'{self.__output_dir}/{debug_file}'
         if self.__debug_mode and exists(debug_file):
             with open(debug_file, 'rb') as f:
                 self.__items = pickle.load(f)

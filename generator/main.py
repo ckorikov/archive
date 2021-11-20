@@ -1,14 +1,14 @@
 import logging
 
-import environment as env
+import layout
 from index import Index
 from zotero import Zotero
 
 
 def prepare_directories():
-    output_dir = env.get_output_dir()
+    output_dir = layout.get_output_dir()
     logging.info(f'Output directory `{output_dir}`')
-    root_dir = env.get_root_dir()
+    root_dir = layout.get_root_dir()
     logging.info(f'Root directory `{root_dir}`')
 
     assert output_dir != root_dir, 'Run generator in the source directory is prohibited'
@@ -19,11 +19,12 @@ def prepare_directories():
 def main():
     logging.info('Started static content generator')
     output_dir, root_dir = prepare_directories()
+    layout.prepare_layout(output_dir, root_dir)
 
-    zotero = Zotero(api_key='hTvqMYvC4Bjhm4xGHqyCTSWv', debug=True)
+    zotero = Zotero(api_key='hTvqMYvC4Bjhm4xGHqyCTSWv', debug=True, output_dir=output_dir)
 
     logging.info('Started index page generation')
-    index = Index(output_dir)
+    index = Index(output_dir, root_dir)
     index.fill(zotero)
     index.save()
 
