@@ -3,16 +3,16 @@ import logging
 import pickle
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from multiprocessing import Manager, Pool, cpu_count
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 import click
+import pandas as pd
 from pyzotero import zotero
 from tqdm import tqdm
 from transliterate import translit
-import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
 
@@ -26,12 +26,14 @@ class Config:
     cache: bool = False
     output_json: str = "publications.json"
 
+
 @click.command()
 @click.option("-j", "--jobs", type=int, default=cpu_count(), help="Number of jobs.")
 @click.option("-c", "--cache", type=bool, is_flag=True, default=False, help="Use cache.")
 def process_cli(**kwargs):
     cfg = Config(**kwargs)
     main(cfg)
+
 
 class Item:
     def __init__(self, item: Dict) -> None:
@@ -41,13 +43,13 @@ class Item:
         self.authors = [Item.name(author["firstName"], author["lastName"]) for author in item.get("creators", [])]
         self.language = item.get("language", None)
         self.url = item.get("url", None)
-        self.year, self.month, self.day =  Item.date(item['date'])
+        self.year, self.month, self.day = Item.date(item["date"])
         self.place = item.get("place", None)
         self.tags = {tag["tag"] for tag in item.get("tags", {})}
 
     @property
     def identifier(self):
-        return  Item.normalize(f"{self.year}-{self.title}")
+        return Item.normalize(f"{self.year}-{self.title}")
 
     def to_dict(self):
         return {
@@ -59,7 +61,7 @@ class Item:
             "title": self.title,
             "authors": list(self.authors),
             "tags": list(self.tags),
-            "url": self.url
+            "url": self.url,
         }
 
     def __repr__(self) -> str:
@@ -77,17 +79,17 @@ class Item:
     def normalize(text: str) -> str:
         text = text.lower()
         text = translit(text, "ru", reversed=True)
-        text = text.replace("'","")
-        text = text.replace("c++","cpp")
-        text_list=[]
+        text = text.replace("'", "")
+        text = text.replace("c++", "cpp")
+        text_list = []
         for e in text:
-            text_list.append(e if e.isalnum() else '-')
-        text = ''.join(text_list)
-        text = re.sub(r'(-)\1+', r'-', text)
-        text = text.lstrip('-')
-        text = text.rstrip('-')
+            text_list.append(e if e.isalnum() else "-")
+        text = "".join(text_list)
+        text = re.sub(r"(-)\1+", r"-", text)
+        text = text.lstrip("-")
+        text = text.rstrip("-")
         return text
-    
+
     def date(date_str: str) -> Tuple[int, Optional[int], Optional[int]]:
         try:
             date = datetime.strptime(date_str, "%Y/%m/%d").date()
@@ -169,18 +171,21 @@ def parse_items(items: List[Dict], cfg: Config) -> List[Item]:
 
 
 def items_to_dataframe(items: List[Item], cfg: Config) -> pd.DataFrame:
-    list_of_dics = [i.to_dict() for i in items] 
+    list_of_dics = [i.to_dict() for i in items]
     df = pd.DataFrame(list_of_dics)
-    df = df.astype({'year': 'Int64', 'month': 'Int64', 'day': 'Int64'})
+    df = df.astype({"year": "Int64", "month": "Int64", "day": "Int64"})
     return df
+
 
 def export_json(filename: Path, items: List[Item], cfg: Config):
     df = items_to_dataframe(items, cfg)
-    df.to_json(filename, force_ascii=False, orient='records', lines=False)
+    df.to_json(filename, force_ascii=False, orient="records", lines=False)
+
 
 def export_csv(filename: Path, items: List[Item], cfg: Config):
     df = items_to_dataframe(items, cfg)
     df.to_csv(filename)
+
 
 def main(cfg: Config):
     if cfg.cache:
@@ -191,6 +196,7 @@ def main(cfg: Config):
 
     items = parse_items(items, cfg)
     export_json(cfg.output_json, items, cfg)
+
 
 if __name__ == "__main__":
     process_cli()
