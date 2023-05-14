@@ -1,0 +1,7 @@
+click
+tqdm
+pyzotero
+transliterate
+pandas
+black
+isort
