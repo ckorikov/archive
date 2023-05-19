@@ -47,9 +47,11 @@ class Item:
         self.place = item.get("place", None)
         self.tags = {tag["tag"] for tag in item.get("tags", {})}
 
+        self.review_type(item)
+
     @property
     def identifier(self):
-        return Item.normalize(f"{self.year}-{self.title}")
+        return Item.normalize(f"{self.year}-{self.title}-{self.type}")
 
     def to_dict(self):
         return {
@@ -63,6 +65,10 @@ class Item:
             "tags": list(self.tags),
             "url": self.url,
         }
+    
+    def review_type(self, item: Dict):
+        if "websiteType" in item:
+            self.type = item["websiteType"].lower()
 
     def __repr__(self) -> str:
         return f"[{self.type}] {self.title} ({self.date})"
