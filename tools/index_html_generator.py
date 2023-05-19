@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+import logging
+from dataclasses import dataclass
+import click
+from io import TextIOWrapper
+import pandas as pd
+from string import Template
+from typing import List, Set
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
+
+
+@dataclass
+class Config:
+    template_file: TextIOWrapper
+    publications_file: TextIOWrapper
+    output_file: str
+    
+
+
+@click.command()
+@click.option("-t", "--template-file", type=click.File(), default='index.template', help="Template file.")
+@click.option("-p", "--publications-file", type=click.File(), required=True, help="Publications JSON file.")
+@click.option("-o", "--output-file", type=click.Path(), default='index.html', help="Output HTML file.")
+def process_cli(**kwargs):
+    cfg = Config(**kwargs)
+    main(cfg)
+
+def gen_icon(item_type: str) -> str:
+    type_to_icon_dict = {
+        'blogPost': 'fas fa-globe',
+        'habr': 'fas fa-heading',
+        'webpage' : 'fas fa-globe',
+        'github' : 'fab fa-github',
+        'telegraph' : 'fa-brands fa-telegram',
+        'presentation' : 'fas fa-chalkboard-teacher',
+        'conferencePaper' : 'fas fa-file-alt',
+        'journalArticle' : 'fas fa-file-alt',
+        'magazineArticle': 'fas fa-book-open',
+        'thesis': 'fas fa-user-graduate',
+        'videoRecording': 'fas fa-video',
+        'book': 'fas fa-book'
+    }
+    icon_str = type_to_icon_dict.get(item_type, 'fas fa-file-alt')
+    return f'<span class="icon"><i class="{icon_str}"></i></span>'
+
+def gen_year(year: int):
+    return f'<div class="meta"><span>{year}</span></div>'
+
+def gen_title(title: str, url: str):
+    return f'<a href="{url}" target="_blank">{title}</a></td>'
+
+def gen_main_block(year: int, item_type: str, title: str, url: str):
+    year_str = gen_year(year)
+    icon_str = gen_icon(item_type)
+    title_str = gen_title(title, url)
+    return f'<td>{year_str} {icon_str} {title_str}</td>'
+
+def gen_tags_block(tags: List[str]):
+    tag_list = []
+    for tag in tags:
+        tag_list.append(f'<a href="javascript:void(0);" class="tag">{tag}</a>')
+    tag_list_str = ' '.join(tag_list)
+    return f'<td>{tag_list_str}</td>'
+
+def gen_qr_code(item_id: str):
+    return f'<td><a href="javascript:void(0);" class="qr"><i class="fa fa-qrcode" id="{item_id}"></i></a></td>'
+
+def gen_item(item_id: str, year: int, item_type: str, title: str, url: str, tags: List[str]):
+    main_str = gen_main_block(year, item_type, title, url)
+    tags_str = gen_tags_block(tags)
+    qrcode_str = gen_qr_code(item_id)
+    return f'<tr id="{item_id}" class="publication">{main_str} {tags_str} {qrcode_str}</tr>'
+
+def gen_list_of_items(publications_dataframe, list_of_seen_items: Set[str]) -> str:
+    publications_dataframe = publications_dataframe.sort_values(by=['year','month','day','title'], ascending=False)
+    list_of_items = []
+    for index, row in publications_dataframe.iterrows():
+        if row['id'] in list_of_seen_items:
+            continue
+
+        item_str = gen_item(item_id=row['id'],
+                            year=row['year'],
+                            item_type=row['type'],
+                            title=row['title'],
+                            url=row['url'],
+                            tags=row['tags']
+        )
+        list_of_items.append(item_str)
+        list_of_seen_items.add(row['id'])
+    return '\n'.join(list_of_items)
+
+def gen_table(name: str, tags: List[str], publications_dataframe, list_of_seen_items: Set[str]):
+    if tags:
+        mask = publications_dataframe['tags'].apply(lambda x: any(tag in x for tag in tags))
+        subset_publications_dataframe = publications_dataframe[mask]
+        list_of_item_str = gen_list_of_items(subset_publications_dataframe, list_of_seen_items)
+    else:
+        list_of_item_str = gen_list_of_items(publications_dataframe, list_of_seen_items)
+    return f'<table> <thead><tr><th colspan="3">{name}</th></tr></thead><tbody>{list_of_item_str}</tbody></table>'
+    
+
+def gen_tables(publications_dataframe):
+    list_of_tables = []
+    list_of_seen_items = set()
+    list_of_tables.append(gen_table('research', ['phd', 'master', 'casimir', 'conference', 'intel'], publications_dataframe, list_of_seen_items))
+    list_of_tables.append(gen_table('teaching', ['polytech', 'jiangsu'], publications_dataframe, list_of_seen_items))
+    list_of_tables.append(gen_table('popsience', ['popscience'], publications_dataframe, list_of_seen_items))
+    list_of_tables.append(gen_table('fun', ['fun', 'wolfram', 'hackathon', 'winenot', 'bar', 'huawei'], publications_dataframe, list_of_seen_items))
+    if len(list_of_seen_items) < len(publications_dataframe.index):
+        list_of_tables.append(gen_table('other', [], publications_dataframe, list_of_seen_items))
+    return '\n'.join(list_of_tables)
+
+def main(cfg: Config):
+    publications_dataframe = pd.read_json(cfg.publications_file)
+    table_str = gen_tables(publications_dataframe)
+
+    template = Template(cfg.template_file.read())
+    html_str = template.substitute({'content': table_str})
+
+    with open(cfg.output_file, 'w') as f:
+        f.write(html_str)
+
+
+if __name__ == "__main__":
+    process_cli()
