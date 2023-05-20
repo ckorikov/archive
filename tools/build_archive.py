@@ -46,8 +46,10 @@ class Item:
         self.year, self.month, self.day = Item.date(item["date"])
         self.place = item.get("place", None)
         self.tags = {tag["tag"] for tag in item.get("tags", {})}
+        self.group = item.get("meetingName", None)
 
         self.review_type(item)
+        self.review_group()
 
     @property
     def identifier(self):
@@ -65,11 +67,17 @@ class Item:
             "tags": list(self.tags),
             "url": self.url,
             "language": self.language,
+            "group": self.group,
         }
-    
+
     def review_type(self, item: Dict):
         if "websiteType" in item:
             self.type = item["websiteType"].lower()
+
+    def review_group(self):
+        if self.group is not None:
+            if len(self.group) == 0:
+                self.group = None
 
     def __repr__(self) -> str:
         return f"[{self.type}] {self.title} ({self.date})"
@@ -82,15 +90,15 @@ class Item:
         if second:
             name.append(second)
         return " ".join(name)
-    
+
     @staticmethod
     def normalize_language(lang: Optional[str]) -> str:
         if lang is None:
             return None
-        if 'ru' in lang.lower():
-            return 'russian'
+        if "ru" in lang.lower():
+            return "russian"
         else:
-            return 'english'
+            return "english"
 
     def normalize(text: str) -> str:
         text = text.lower()
@@ -172,7 +180,7 @@ def get_item_details(items: List[Dict], cfg: Config):
 
 
 def get_items(cfg: Config):
-    items: List[Dict] = get_zotero_items(cfg)    
+    items: List[Dict] = get_zotero_items(cfg)
     items = get_item_details(items, cfg)
     return items
 
