@@ -41,7 +41,7 @@ class Item:
         self.type = item["itemType"]
         self.title = item.get("title", None)
         self.authors = [Item.name(author["firstName"], author["lastName"]) for author in item.get("creators", [])]
-        self.language = item.get("language", None)
+        self.language = Item.normalize_language(item.get("language", None))
         self.url = item.get("url", None)
         self.year, self.month, self.day = Item.date(item["date"])
         self.place = item.get("place", None)
@@ -64,6 +64,7 @@ class Item:
             "authors": list(self.authors),
             "tags": list(self.tags),
             "url": self.url,
+            "language": self.language,
         }
     
     def review_type(self, item: Dict):
@@ -81,6 +82,15 @@ class Item:
         if second:
             name.append(second)
         return " ".join(name)
+    
+    @staticmethod
+    def normalize_language(lang: Optional[str]) -> str:
+        if lang is None:
+            return None
+        if 'ru' in lang.lower():
+            return 'russian'
+        else:
+            return 'english'
 
     def normalize(text: str) -> str:
         text = text.lower()
@@ -140,7 +150,7 @@ def get_zotero_items(cfg: Config) -> List[Dict]:
     logging.info(f"Download data from zotero library `{cfg.library_id}`")
     zt = zotero.Zotero(cfg.library_id, cfg.library_type, cfg.api_key)
     zt.add_parameters(sort="date")
-    return zt.publications()
+    return zt.everything(zt.publications())
 
 
 def get_element_data(args):
@@ -162,7 +172,7 @@ def get_item_details(items: List[Dict], cfg: Config):
 
 
 def get_items(cfg: Config):
-    items: List[Dict] = get_zotero_items(cfg)
+    items: List[Dict] = get_zotero_items(cfg)    
     items = get_item_details(items, cfg)
     return items
 
