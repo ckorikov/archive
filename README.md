@@ -1,3 +1,3 @@
 # Archive
 
-New version
+![](assets/img/opengraph.png)
