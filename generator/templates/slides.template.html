@@ -1,0 +1,46 @@
+<!doctype html>
+            <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+                    <title>$title</title>
+
+                    <link rel="stylesheet" href="https://pagecdn.io/lib/reveal/4.1.2/reset.min.css">
+                    <link rel="stylesheet" href="https://pagecdn.io/lib/reveal/4.1.2/reveal.min.css">
+	                <link rel="stylesheet" href="https://pagecdn.io/lib/reveal/4.1.2/theme/white.min.css">
+
+                    <link rel="stylesheet" href="https://pagecdn.io/lib/reveal/4.1.2/plugin/highlight/monokai.min.css">
+                    <style>
+                        .reveal {
+                            font-family: 'Merriweather', serif;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="reveal">
+                        <div class="slides">
+                            <section class="center">
+                                <small style="font-size: small">$tags</small>
+                                <h3>$title</h3>
+                                <small style="font-size: small">$date &#9679; $counter </small>
+                            </section>
+                            $slides
+                        </div>
+                    </div>
+                    <script src="https://pagecdn.io/lib/reveal/4.1.2/reveal.min.js"></script>
+                    <script src="https://pagecdn.io/lib/reveal/4.1.2/plugin/notes/notes.min.js"></script>
+                    <script src="https://pagecdn.io/lib/reveal/4.1.2/plugin/markdown/markdown.min.js"></script>
+                    <script src="https://pagecdn.io/lib/reveal/4.1.2/plugin/highlight/highlight.min.js"></script>
+                    <script>
+                        // More info about initialization & config:
+                        // - https://revealjs.com/initialization/
+                        // - https://revealjs.com/config/
+                        Reveal.initialize({
+                            hash: true,
+                            // Learn about plugins: https://revealjs.com/plugins/
+                            plugins: [ RevealMarkdown, RevealHighlight ]
+                        });
+                    </script>
+                </body>
+            </html>
