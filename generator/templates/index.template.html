@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta name='description' content='Archive of published work'>
+    <meta name='keywords' content='ck, constantine, korikov, archive, cv'>
+    <meta name='author' content='Constantine Korikov'>
+    <meta name="yandex-verification" content="0a551e133431e226"/>
+    <title>Constantine Korikov Archive</title>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,900&display=swap&subset=cyrillic'
+          rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn.rawgit.com/necolas/normalize.css/master/normalize.css'>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0-11/css/all.min.css'>
+    <link rel='stylesheet' href='milligram.min.css'>
+    <link rel='stylesheet' href='style.css'>
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+</head>
+
+<body>
+<div class='container'>
+
+    <div class='row' style='padding-top:10%'>
+        <div class='column column-60 column-offset-20'>
+            <h4>Constantine Korikov<span class='marker'>_</span></h4>
+        </div>
+    </div>
+
+    <div class='row'>
+        <div class='column column-60 column-offset-20'><input id='request' type='text'></div>
+    </div>
+
+    <div class='row' style='padding-top:0.5cm'>
+        <div class='column column-20'></div>
+        $content
+        <div class='column column-20'></div>
+    </div>
+</div>
+<script src='https://cdn.jsdelivr.net/npm/kjua@0.6.0/dist/kjua.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.4.5/fuse.min.js'></script>
+<script type="text/javascript">
+    const data = $data;
+    const options = {
+        shouldSort: true,
+        threshold: 0.4,
+        location: 0,
+        distance: 100,
+        useExtendedSearch: true,
+        maxPatternLength: 32,
+        minMatchCharLength: 2,
+        keys: [
+            'date',
+            'title',
+            'creators',
+            'tags'
+        ]
+    };
+
+    $(document).on('click', '.tag', function (e) {
+        e.preventDefault();
+        $('#request').val($(e.target).text() + ' ');
+        search()
+    });
+
+    const rows = $('table tbody  tr').get();
+    let global_hash = new Map();
+    rows.forEach(function (element) {
+        global_hash[element.id] = element;
+    });
+
+
+    function search() {
+        const req = $('#request').val();
+        if (req) {
+            let fuse = new Fuse(data, options);
+            const result = fuse.search(req);
+
+            $('table tr').remove();
+
+            result.forEach(function (element) {
+                console.log(element);
+                const d = global_hash['id-' + element.id];
+                $('table').children('tbody').append(d);
+            });
+        } else {
+            rows.forEach(function (element) {
+                $('table').children('tbody').append(element);
+            });
+        }
+
+    }
+
+    $('#request').on('keyup', function () {
+        search();
+    });
+</script>
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function (m, e, t, r, i, k, a) {
+        m[i] = m[i] || function () {
+            (m[i].a = m[i].a || []).push(arguments)
+        };
+        m[i].l = 1 * new Date();
+        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+    })
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(54620479, "init", {
+        clickmap: true,
+        trackLinks: true,
+        accurateTrackBounce: true
+    });
+</script>
+<noscript>
+    <div><img src="https://mc.yandex.ru/watch/54620479" style="position:absolute; left:-9999px;" alt=""/></div>
+</noscript>
+<!-- /Yandex.Metrika counter -->
+</body>
+
+</html>
