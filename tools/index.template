@@ -1,15 +1,22 @@
 <!DOCTYPE html>
-<html>
-
+<html prefix="og: https://ogp.me/ns#">
 <head>
-  <meta charset='utf-8'>
-  <meta name='description' content='Archive of published work'>
-  <meta name='keywords' content='ck, constantine, korikov, archive, cv'>
-  <meta name='author' content='Constantine Korikov'>
+  <meta charset='utf-8'/>
+  <meta name='description' content='Archive of published works'/>
+  <meta name='keywords' content='ck, constantine, korikov, archive, cv'/>
+  <meta name='author' content='Constantine Korikov'/>
   <meta name="yandex-verification" content="0a551e133431e226" />
+
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://korikov.cc"/>
+  <meta property="og:image" content="assets/img/opengraph.png"/>
+  <meta property="og:title" content="Constantine Korikov Archive"/>
+  <meta property="og:description" content="Archive of published works"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
   <title>Constantine Korikov Archive</title>
-  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,900&display=swap&subset=cyrillic'
-    rel='stylesheet'>
+  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,900&display=swap&subset=cyrillic' rel='stylesheet'>
   <link rel='stylesheet' href='https://cdn.rawgit.com/necolas/normalize.css/master/normalize.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
