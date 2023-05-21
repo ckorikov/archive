@@ -9,13 +9,13 @@ help:
 generate-json:
 	${python-exec} tools/build_archive.py
 
-generate-html: generate-json
+generate-html: publications.json
 	${python-exec} tools/index_html_generator.py  -t ${template} -p publications.json
 
 clean:
 	rm -f publications.json index.html
 
-generate: generate-html
+generate: generate-json generate-html
 
 format: black isort
 
@@ -24,3 +24,6 @@ black:
 
 isort:
 	${python-exec} -m isort tools
+
+install:
+	${python-exec} -m pip install -r tools/requirements.txt
