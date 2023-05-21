@@ -70,10 +70,7 @@
   </div>
   <script src='https://cdn.jsdelivr.net/npm/kjua@0.6.0/dist/kjua.min.js'></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js'></script>
-  <script src="https://unpkg.com/lunr/lunr.js"></script>
-  <script src="https://unpkg.com/lunr-languages/lunr.stemmer.support.js"></script>
-  <script src="https://unpkg.com/lunr-languages/lunr.multi.js"></script>
-  <script src="https://unpkg.com/lunr-languages/lunr.ru.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
   <script src='assets/logic.js'></script>
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript" >

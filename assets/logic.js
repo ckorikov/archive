@@ -7,8 +7,18 @@ var idx = undefined;
 $(document).on('click', '.tag', function (e) {
   e.preventDefault();
   $('#request').val($(e.target).text());
+  hide_qr_container();
+  hide_message_container();
   hide_all_publications();
-  search_and_show_publications();
+  show_publications_container();
+  show_all_tbody();
+  try {
+    search_and_show_publications();
+  } catch (e) {
+    console.log(e);
+    message("Search doesn't work");
+  }
+  hide_tbody_without_visible_publications();
 });
 
 $('#request').on('keyup', function () {
@@ -78,18 +88,15 @@ function loadJSON(callback) {
 
 
 function build_search_index(callback) {
-  idx = lunr(function () {
-    this.use(lunr.multiLanguage('en', 'ru'))
-    this.ref('id');
-    this.field('title');
-    this.field('year');
-    this.field('type');
-    this.field('tags');
-    this.field('authors');
-    global_publications.forEach(function (element) {
-      this.add(element);
-    }, this);
-  });
+  const options = {
+    includeScore: false,
+    findAllMatches: true,
+    ignoreLocation: true,
+    threshold: 0.2,
+    keys: ['title', 'authors', 'year', 'type', 'tags', 'language']
+  }
+  
+  idx = new Fuse(global_publications, options)
 
   if (callback) callback();
 }
@@ -127,9 +134,9 @@ function message(msg) {
 function search_and_show_publications() {
   const req = $('#request').val() ? $('#request').val() : '';
   if (req) {
-    const result = idx.search(req);
+    const result = idx.search(req.trim());
     result.forEach(function (element) {
-      show_item_by_id(element['ref'])
+      show_item_by_id(element.item['id'])
     });
 
   }
