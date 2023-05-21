@@ -212,9 +212,9 @@ def main(cfg: Config):
     template = Template(cfg.template_file.read())
     html_str = template.substitute({"content": table_str})
 
-    soup = BeautifulSoup(html_str, 'html.parser')
+    soup = BeautifulSoup(html_str, 'html.parser', preserve_whitespace_tags=["a", "span", "i"])
     html_str = soup.prettify()
-    
+
     with open(cfg.output_file, "w") as f:
         f.write(html_str)
 
