@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from io import TextIOWrapper
 from string import Template
 from typing import List, Set
+from bs4 import BeautifulSoup
 
 import click
 import pandas as pd
@@ -73,7 +74,7 @@ def gen_tags_block(tags: List[str]):
 
 
 def gen_qr_code(item_id: str):
-    return f'<td><a href="javascript:void(0);" class="qr"><i class="fa fa-qrcode" id="{item_id}"></i></a></td>'
+    return f'<td><a href="javascript:void(0);" class="qr"><i class="fa fa-qrcode"></i></a></td>'
 
 
 def gen_item(item_id: str, year: int, item_type: str, title: str, url: str, tags: List[str]):
@@ -211,6 +212,9 @@ def main(cfg: Config):
     template = Template(cfg.template_file.read())
     html_str = template.substitute({"content": table_str})
 
+    soup = BeautifulSoup(html_str, 'html.parser')
+    html_str = soup.prettify()
+    
     with open(cfg.output_file, "w") as f:
         f.write(html_str)
 
