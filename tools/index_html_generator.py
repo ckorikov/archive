@@ -43,6 +43,7 @@ def gen_icon(item_type: str) -> str:
         "thesis": "fas fa-user-graduate",
         "videoRecording": "fas fa-video",
         "book": "fas fa-book",
+        "group": "fas fa-layer-group",
     }
     icon_str = type_to_icon_dict.get(item_type, "fas fa-file-alt")
     return f'<span class="icon"><i class="{icon_str}"></i></span>'
@@ -84,7 +85,7 @@ def gen_item(item_id: str, year: int, item_type: str, title: str, url: str, tags
 
 def gen_group_title(year: int, title: str):
     year_str = gen_year(year)
-    icon_str = gen_icon("webpage")
+    icon_str = gen_icon("group")
     return f'<tr><td colspan="3">{year_str} {icon_str} {title}</td></tr>'
 
 
@@ -194,21 +195,10 @@ def gen_table(name: str, tags: List[str], publications_dataframe, list_of_seen_i
 def gen_tables(publications_dataframe):
     list_of_tables = []
     list_of_seen_items = set()
-    list_of_tables.append(
-        gen_table(
-            "research", ["phd", "master", "casimir", "conference", "intel"], publications_dataframe, list_of_seen_items
-        )
-    )
+    list_of_tables.append(gen_table("research", ["phd", "master", "casimir", "conference", "intel"], publications_dataframe, list_of_seen_items))
     list_of_tables.append(gen_table("teaching", ["polytech", "jiangsu"], publications_dataframe, list_of_seen_items))
     list_of_tables.append(gen_table("popsience", ["popscience"], publications_dataframe, list_of_seen_items))
-    list_of_tables.append(
-        gen_table(
-            "fun",
-            ["fun", "wolfram", "hackathon", "winenot", "bar", "huawei"],
-            publications_dataframe,
-            list_of_seen_items,
-        )
-    )
+    list_of_tables.append(gen_table("fun", ["fun", "wolfram", "hackathon", "winenot", "bar", "huawei"], publications_dataframe, list_of_seen_items))
     if len(list_of_seen_items) < len(publications_dataframe.index):
         list_of_tables.append(gen_table("other", [], publications_dataframe, list_of_seen_items))
     return "\n".join(list_of_tables)
