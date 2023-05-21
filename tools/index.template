@@ -13,12 +13,12 @@
   <link rel='stylesheet' href='https://cdn.rawgit.com/necolas/normalize.css/master/normalize.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
-  <link rel='stylesheet' href='milligram.min.css'>
-  <link rel='stylesheet' href='style.css'>
+  <link rel='stylesheet' href='assets/milligram.min.css'>
+  <link rel='stylesheet' href='assets/style.css'>
   <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-  <link rel="manifest" href="favicon/site.webmanifest">
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
 </head>
 
 <body>
@@ -49,8 +49,8 @@
       <div class='column column-60'>
       <table>
         <tr><td id="qrcode"><a href="#"></a></td></tr>
-        <tr><td id="qrcaption">title</td><tr>
-        <tr><td id="qrlink"><a href="'+link+'">x</a></td><tr>
+        <tr><td id="qrcaption"></td><tr>
+        <tr><td id="qrlink"><a href=""></a></td><tr>
       </table>
     </div>
     <div class='column column-20'></div>
@@ -74,7 +74,7 @@
   <script src="https://unpkg.com/lunr-languages/lunr.stemmer.support.js"></script>
   <script src="https://unpkg.com/lunr-languages/lunr.multi.js"></script>
   <script src="https://unpkg.com/lunr-languages/lunr.ru.js"></script>
-  <script src='logic.js'></script>
+  <script src='assets/logic.js'></script>
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript" >
     (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
