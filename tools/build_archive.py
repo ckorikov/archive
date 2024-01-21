@@ -161,11 +161,20 @@ def get_zotero_items(cfg: Config) -> List[Dict]:
     return zt.everything(zt.publications())
 
 
-def get_element_data(args):
+def get_element_data(args, retries: int = 3):
     item, parameters = args
     key = item["data"]["key"]
     zt = parameters["zotero"]
-    return zt.item(key)
+    try:
+        data = zt.item(key)
+    except Exception as e:
+        if retries > 0:
+            logging.warning(f"Retry {retries} for {key}")
+            return get_element_data(args, retries - 1)
+        else:
+            logging.error(f"Failed to get data for {key}")
+            raise e
+    return data
 
 
 def get_item_details(items: List[Dict], cfg: Config):
