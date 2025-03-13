@@ -43,7 +43,14 @@ class Item:
         self.authors = [Item.name(author["firstName"], author["lastName"]) for author in item.get("creators", [])]
         self.language = Item.normalize_language(item.get("language", None))
         self.url = item.get("url", None)
-        self.year, self.month, self.day = Item.date(item["date"])
+        
+        date_result = Item.date(item["date"])
+        if date_result:
+            self.year, self.month, self.day = date_result
+        else:
+            logging.error(f"Error: {self.title} has no date")
+            self.year, self.month, self.day = None, None, None
+        
         self.place = item.get("place", None)
         self.tags = {tag["tag"] for tag in item.get("tags", {})}
         self.group = item.get("meetingName", None)
