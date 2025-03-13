@@ -51,6 +51,7 @@ def gen_icon(item_type: str) -> str:
 
 
 def gen_year(year: int):
+    assert year is not None
     return f'<div class="meta"><span>{year}</span></div>'
 
 
@@ -67,7 +68,7 @@ def gen_main_block(year: int, item_type: str, title: str, url: str):
 
 def gen_tags_block(tags: List[str]):
     tag_list = []
-    for tag in tags:
+    for tag in sorted(tags):
         tag_list.append(f'<a href="javascript:void(0);" class="tag">{tag}</a>')
     tag_list_str = " ".join(tag_list)
     return f"<td>{tag_list_str}</td>"
