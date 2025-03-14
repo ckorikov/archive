@@ -198,7 +198,7 @@ def gen_tables(publications_dataframe):
     list_of_tables = []
     list_of_seen_items = set()
     list_of_tables.append(gen_table("research", ["phd", "master", "casimir", "conference", "intel"], publications_dataframe, list_of_seen_items))
-    list_of_tables.append(gen_table("teaching", ["polytech", "jiangsu"], publications_dataframe, list_of_seen_items))
+    list_of_tables.append(gen_table("teaching", ["polytech", "jiangsu", "mipt"], publications_dataframe, list_of_seen_items))
     list_of_tables.append(gen_table("popsience", ["popscience"], publications_dataframe, list_of_seen_items))
     list_of_tables.append(gen_table("fun", ["fun", "wolfram", "hackathon", "winenot", "bar", "huawei"], publications_dataframe, list_of_seen_items))
     if len(list_of_seen_items) < len(publications_dataframe.index):
