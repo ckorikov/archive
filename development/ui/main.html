@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Constantine Korikov</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --c-paper: #fcfcfa;
+      --c-ink: #1a1917;
+      --c-ink-medium: #5c5955;
+      --c-ink-light: #9a9590;
+      --c-ink-faint: #c5c2bc;
+      --c-accent: #6b1c00;
+      --c-pdf: #2d6a4f;
+      
+      --font-main: "Cormorant", "Garamond", "Times New Roman", serif;
+      
+      --text-xs: 0.7rem;
+      --text-sm: 0.9rem;
+      --text-base: 1.05rem;
+      --text-lg: 1.15rem;
+      
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 2rem;
+      --space-xl: 4rem;
+      --space-2xl: 6rem;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      font-size: 18px;
+    }
+    
+    body {
+      font-family: var(--font-main);
+      font-size: var(--text-base);
+      line-height: 1.45;
+      color: var(--c-ink);
+      background: var(--c-paper);
+      min-height: 100vh;
+      padding: var(--space-2xl) var(--space-lg);
+    }
+    
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    
+    .page {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    
+    /* Right margin stats */
+    .margin-stats {
+      position: fixed;
+      top: 20%;
+      right: 20px;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--c-ink-faint);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    /* Header */
+    .header {
+      margin-bottom: var(--space-xl);
+    }
+    
+    .header__archive {
+      font-size: var(--text-xs);
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--c-ink-faint);
+      margin-bottom: var(--space-md);
+    }
+    
+    .header__name {
+      font-size: var(--text-lg);
+      font-weight: 500;
+      font-style: italic;
+    }
+    
+    .header__name a:hover {
+      color: var(--c-accent);
+    }
+    
+    /* Navigation */
+    .nav {
+      margin-bottom: var(--space-xl);
+    }
+    
+    .nav__item {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 400;
+      color: var(--c-ink-light);
+      padding: var(--space-xs) 0;
+      transition: color 0.15s ease;
+    }
+    
+    .nav__item:hover {
+      color: var(--c-ink);
+    }
+    
+    .nav__item.is-active {
+      color: var(--c-ink);
+      font-style: italic;
+    }
+    
+    /* Category */
+    .category {
+      margin-bottom: var(--space-2xl);
+    }
+    
+    .category__title {
+      font-size: var(--text-sm);
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--c-ink-medium);
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-xs);
+      border-bottom: 1px solid var(--c-ink-light);
+      display: inline-block;
+    }
+    
+    /* Year group */
+    .year {
+      margin-bottom: var(--space-lg);
+    }
+    
+    .year:last-child {
+      margin-bottom: 0;
+    }
+    
+    .year__title {
+      font-size: var(--text-base);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--c-ink-medium);
+      margin-bottom: var(--space-sm);
+    }
+    
+    /* Items */
+    .items {
+      padding-left: var(--space-lg);
+    }
+    
+    .item {
+      display: block;
+      padding: var(--space-xs) 0;
+      transition: color 0.15s ease;
+    }
+    
+    .item:hover {
+      color: var(--c-accent);
+    }
+    
+    .item__title {
+      font-weight: 400;
+    }
+    
+    /* Co-authors */
+    .item__authors {
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--c-ink-light);
+    }
+    
+    /* PDF marker */
+    .item__pdf {
+      font-size: var(--text-xs);
+      font-style: normal;
+      color: var(--c-pdf);
+      margin-left: var(--space-sm);
+    }
+    
+    /* Tags */
+    .item__tags {
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--c-ink-light);
+    }
+    
+    .item__tags::before {
+      content: " — ";
+    }
+    
+    /* Meta */
+    .item__meta {
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--c-ink-light);
+      margin-left: var(--space-sm);
+    }
+    
+    /* Footer */
+    .footer {
+      margin-top: var(--space-2xl);
+      font-size: var(--text-sm);
+      color: var(--c-ink-light);
+    }
+    
+    /* Responsive */
+    @media (max-width: 900px) {
+      .margin-stats {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 540px) {
+      html {
+        font-size: 16px;
+      }
+      
+      body {
+        padding: var(--space-xl) var(--space-md);
+      }
+      
+      .items {
+        padding-left: var(--space-md);
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="margin-stats">12 papers · 3 courses · 2011–2025</div>
+  
+  <div class="page">
+    
+    <header class="header">
+      <div class="header__archive">Archive</div>
+      <div class="header__name"><a href="/">Constantine Korikov</a></div>
+    </header>
+    
+    <nav class="nav">
+      <a href="/" class="nav__item is-active">All</a>
+      <a href="/teaching/" class="nav__item">Teaching</a>
+      <a href="/casimir/" class="nav__item">Casimir Physics</a>
+      <a href="/ai/" class="nav__item">AI</a>
+    </nav>
+    
+    <main>
+      
+      <!-- RESEARCH -->
+      <section class="category">
+        <h2 class="category__title">Research</h2>
+        
+        <div class="year">
+          <div class="year__title">2025</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Nonequilibrium Casimir pressure for two graphene-coated plates</span>
+              <span class="item__pdf">pdf</span>
+              <br>
+              <span class="item__authors">G. Klimchitskaya, V. Mostepanenko</span>
+              <span class="item__tags">casimir</span>
+            </a>
+            <a href="#" class="item">
+              <span class="item__title">Polarization tensor in spacetime of three dimensions</span>
+              <span class="item__pdf">pdf</span>
+              <br>
+              <span class="item__authors">G. Klimchitskaya, V. Mostepanenko</span>
+              <span class="item__tags">casimir</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2024</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Nonequilibrium Casimir–Polder Force between Nanoparticles</span>
+              <span class="item__pdf">pdf</span>
+              <br>
+              <span class="item__authors">G. Klimchitskaya, V. Mostepanenko</span>
+              <span class="item__tags">casimir</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2017</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Особенности отражения электромагнитных волн</span>
+              <span class="item__pdf">pdf</span>
+              <span class="item__tags">casimir, диссертация</span>
+            </a>
+          </div>
+        </div>
+        
+      </section>
+      
+      <!-- TEACHING -->
+      <section class="category">
+        <h2 class="category__title">Teaching</h2>
+        
+        <div class="year">
+          <div class="year__title">2025</div>
+          <div class="items">
+            <a href="/teaching/ai-2025/" class="item">
+              <span class="item__title">Effective AI</span>
+              <span class="item__meta">МФТИ, 12 лекций</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2022</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Информатика</span>
+              <span class="item__meta">Политех, 13 лекций</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2020</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Информатика</span>
+              <span class="item__meta">Политех, 12 лекций</span>
+            </a>
+          </div>
+        </div>
+        
+      </section>
+      
+      <!-- POPSCIENCE -->
+      <section class="category">
+        <h2 class="category__title">Popscience</h2>
+        
+        <div class="year">
+          <div class="year__title">2021</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">F*ck love</span>
+              <span class="item__pdf">pdf</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2017</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">6 девяток Фейнмана</span>
+            </a>
+          </div>
+        </div>
+        
+        <div class="year">
+          <div class="year__title">2012</div>
+          <div class="items">
+            <a href="#" class="item">
+              <span class="item__title">Связь на Марсе</span>
+            </a>
+            <a href="#" class="item">
+              <span class="item__title">Читаем QR код</span>
+            </a>
+          </div>
+        </div>
+        
+      </section>
+      
+    </main>
+    
+    <footer class="footer">© 2025</footer>
+    
+  </div>
+</body>
+</html>
