@@ -1,0 +1,14 @@
+<a href="{{ .url | default "#" }}" class="item">
+  <span class="item__title">{{ .title }}</span>
+  {{- if .pdf }}<span class="item__pdf">pdf</span>{{ end -}}
+  {{- with .authors }}
+    <br>
+    <span class="item__authors">{{ delimit . ", " }}</span>
+  {{- end -}}
+  {{- with .tags }}
+    <span class="item__tags">{{ delimit . ", " }}</span>
+  {{- end -}}
+  {{- with .meta }}
+    <span class="item__meta">{{ . }}</span>
+  {{- end -}}
+</a>

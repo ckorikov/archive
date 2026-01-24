@@ -1,0 +1,9 @@
+name = "book-toc-ck"
+license = "MIT"
+licenselink = "https://github.com/ckorikov/book-toc-ck/blob/main/LICENSE"
+description = "Book-style typography theme for academic archives"
+tags = ["academic", "archive", "minimal", "typography"]
+min_version = "0.146.0"
+
+[author]
+  name = "Constantine Korikov"

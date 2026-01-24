@@ -1,0 +1,8 @@
+<div class="year">
+  <div class="year__title">{{ .year }}</div>
+  <div class="items">
+    {{- range .items }}
+      {{- partial "item.html" . -}}
+    {{- end -}}
+  </div>
+</div>

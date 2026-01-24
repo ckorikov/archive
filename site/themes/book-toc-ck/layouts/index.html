@@ -1,0 +1,36 @@
+{{ define "main" }}
+  {{- .Content -}}
+
+  {{- with .Params.research }}
+    {{- partial "category.html" (dict "title" "Research" "items" .) -}}
+  {{- end -}}
+
+  {{- $teaching := site.GetPage "/teaching" -}}
+  {{- with $teaching.Pages }}
+    <section class="category">
+      <h2 class="category__title">Teaching</h2>
+      {{- range . }}
+        {{- $lectureCount := len (.Params.lectures | default slice) -}}
+        {{- $meta := .Params.school -}}
+        {{- if $lectureCount }}
+          {{- $meta = printf "%s, %d lectures" $meta $lectureCount -}}
+        {{- end -}}
+        <div class="year">
+          <div class="year__title">{{ .Params.year }}</div>
+          <div class="items">
+            {{- partial "item.html" (dict
+              "title" .Title
+              "url" (.Params.url | default .RelPermalink)
+              "pdf" .Params.pdf
+              "meta" $meta
+            ) -}}
+          </div>
+        </div>
+      {{- end -}}
+    </section>
+  {{- end -}}
+
+  {{- with .Params.popscience }}
+    {{- partial "category.html" (dict "title" "Popscience" "items" .) -}}
+  {{- end -}}
+{{ end }}

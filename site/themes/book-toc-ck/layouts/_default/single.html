@@ -1,0 +1,18 @@
+{{ define "main" }}
+  <h1 class="page-title">{{ .Title }}</h1>
+
+  {{- with .Params.date }}
+    <div class="page-date">{{ . | time.Format "2 January 2006" }}</div>
+  {{- end -}}
+
+  {{- .Content -}}
+
+  {{- with .Params.tags }}
+    <div class="page-tags">
+      {{- range $i, $tag := . -}}
+        {{- if $i }}, {{ end -}}
+        <a href="{{ "/tags/" | relURL }}{{ $tag | urlize }}/">{{ $tag }}</a>
+      {{- end -}}
+    </div>
+  {{- end -}}
+{{ end }}
