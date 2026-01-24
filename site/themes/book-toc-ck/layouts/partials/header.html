@@ -1,0 +1,5 @@
+{{- $label := site.Params.header_label | default "Archive" -}}
+<div class="header__label">{{ $label }}</div>
+<div class="header__name">
+  <a href="{{ "/" | relURL }}">{{ site.Params.author | default site.Title }}</a>
+</div>

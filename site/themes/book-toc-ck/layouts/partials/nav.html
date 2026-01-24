@@ -1,0 +1,14 @@
+{{- range site.Menus.main -}}
+  {{- $url := .URL | default .PageRef -}}
+  {{- $isActive := false -}}
+  {{- if $url -}}
+    {{- if eq $url "/" -}}
+      {{- $isActive = eq $.RelPermalink "/" -}}
+    {{- else -}}
+      {{- $isActive = hasPrefix $.RelPermalink $url -}}
+    {{- end -}}
+  {{- end -}}
+  <a href="{{ $url }}" class="nav__item{{ if $isActive }} is-active{{ end }}">
+    {{- .Name -}}
+  </a>
+{{- end -}}

@@ -1,0 +1,6 @@
+<section class="category">
+  <h2 class="category__title">{{ .title }}</h2>
+  {{- range .items }}
+    {{- partial "year-group.html" . -}}
+  {{- end -}}
+</section>

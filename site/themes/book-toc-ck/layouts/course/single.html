@@ -1,0 +1,49 @@
+{{ define "main" }}
+  <div class="course-header">
+    <h1 class="course-header__title">{{ .Title }}</h1>
+
+    {{- $meta := slice -}}
+    {{- with .Params.school }}{{ $meta = $meta | append . }}{{ end -}}
+    {{- with .Params.year }}{{ $meta = $meta | append . }}{{ end -}}
+    {{- if $meta }}
+      <div class="course-header__meta">{{ delimit $meta " · " }}</div>
+    {{- end -}}
+
+    {{- with .Params.description }}
+      <p class="course-header__description">{{ . }}</p>
+    {{- end -}}
+
+    {{- with .Params.tags }}
+      <div class="course-header__tags">
+        {{- range . -}}
+          <span class="course-header__tag">{{ . }}</span>
+        {{- end -}}
+      </div>
+    {{- end -}}
+  </div>
+
+  {{- .Content -}}
+
+  {{- with .Params.lectures }}
+    <section class="syllabus">
+      <h2 class="syllabus__title">Syllabus</h2>
+
+      {{- $currentSection := "" -}}
+      {{- range $i, $lecture := . -}}
+        {{- with $lecture.section -}}
+          {{- if ne . $currentSection -}}
+            {{- $currentSection = . -}}
+            <div class="syllabus__section">{{ . }}</div>
+          {{- end -}}
+        {{- end -}}
+
+        {{- partial "lecture-link.html" (dict
+          "num" (add $i 1)
+          "title" $lecture.title
+          "url" $lecture.url
+          "pdf" $lecture.pdf
+        ) -}}
+      {{- end -}}
+    </section>
+  {{- end -}}
+{{ end }}

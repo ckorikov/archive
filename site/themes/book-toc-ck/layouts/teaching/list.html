@@ -1,0 +1,26 @@
+{{ define "main" }}
+  <h1 class="page-title">{{ .Title | default "Teaching" }}</h1>
+
+  {{- .Content -}}
+
+  {{- range .Pages.GroupByParam "school" -}}
+    <section class="university">
+      <h2 class="university__title">{{ .Key }}</h2>
+
+      {{- range .Pages -}}
+        {{- if .Params.lectures }}
+          {{- partial "course-card.html" . -}}
+        {{- else }}
+          <div class="items">
+            {{- partial "item.html" (dict
+              "title" .Title
+              "url" (.Params.url | default .RelPermalink)
+              "pdf" .Params.pdf
+              "tags" (slice (string .Params.year))
+            ) -}}
+          </div>
+        {{- end -}}
+      {{- end -}}
+    </section>
+  {{- end -}}
+{{ end }}
