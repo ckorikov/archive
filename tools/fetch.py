@@ -37,6 +37,7 @@ class ZoteroFetcherConfig:
             library_type=os.environ.get("ZOTERO_LIBRARY_TYPE", "user"),
         )
 
+
 SKIP_TYPES = {"attachment", "note"}
 AUTHOR_TYPES = {"author", "presenter", None}
 
@@ -141,10 +142,7 @@ def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
     detailed = []
 
     with ThreadPoolExecutor(max_workers=config.workers) as executor:
-        futures = {
-            executor.submit(fetch_item_details, zt, key, config.retries): key
-            for key in keys
-        }
+        futures = {executor.submit(fetch_item_details, zt, key, config.retries): key for key in keys}
         for future in as_completed(futures):
             detailed.append(future.result())
 
