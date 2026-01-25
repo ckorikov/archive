@@ -1,4 +1,9 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://korikov.cc/'
 languageCode = 'en-us'
 title = 'Archive'
 theme = 'book-toc-ck'
+disableKinds = ["taxonomy", "term"]
+
+[params]
+  author = "Constantine Korikov"
+  header_label = "Archive"
