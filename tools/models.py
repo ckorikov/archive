@@ -3,7 +3,7 @@
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PublicationType(str, Enum):
@@ -22,21 +22,27 @@ class PublicationType(str, Enum):
     PREPRINT = "preprint"
 
 
-TYPE_ICONS: dict[str, str] = {
-    "journalArticle": "fa-file-alt",
-    "presentation": "fa-chalkboard-teacher",
-    "thesis": "fa-user-graduate",
-    "conferencePaper": "fa-file-alt",
-    "book": "fa-book",
-    "bookSection": "fa-book-open",
-    "blogPost": "fa-globe",
-    "videoRecording": "fa-video",
-    "webpage": "fa-link",
-    "report": "fa-file-contract",
-    "preprint": "fa-file-alt",
+TYPE_ICONS: dict[PublicationType, str] = {
+    PublicationType.JOURNAL_ARTICLE: "fa-file-alt",
+    PublicationType.PRESENTATION: "fa-chalkboard-teacher",
+    PublicationType.THESIS: "fa-user-graduate",
+    PublicationType.CONFERENCE_PAPER: "fa-file-alt",
+    PublicationType.BOOK: "fa-book",
+    PublicationType.BOOK_SECTION: "fa-book-open",
+    PublicationType.BLOG_POST: "fa-globe",
+    PublicationType.VIDEO_RECORDING: "fa-video",
+    PublicationType.WEBPAGE: "fa-link",
+    PublicationType.REPORT: "fa-file-contract",
+    PublicationType.PREPRINT: "fa-file-alt",
 }
 
-RESEARCH_TYPES: set[str] = {"journalArticle", "conferencePaper", "thesis", "preprint", "report"}
+RESEARCH_TYPES: set[PublicationType] = {
+    PublicationType.JOURNAL_ARTICLE,
+    PublicationType.CONFERENCE_PAPER,
+    PublicationType.THESIS,
+    PublicationType.PREPRINT,
+    PublicationType.REPORT,
+}
 
 
 class Author(BaseModel):
@@ -54,6 +60,8 @@ class Author(BaseModel):
 class Publication(BaseModel):
     """Single publication from Zotero."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     type: str
     year: int
@@ -63,15 +71,27 @@ class Publication(BaseModel):
     authors: list[Author] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     url: str | None = None
+    pdf: str | None = None  # Local PDF path (for archive)
     language: str = "english"
-    course: str | None = None
+    course: str | None = Field(default=None, alias="series")
     school: str | None = None
     section: str | None = None
+    presentation_type: str | None = Field(default=None, alias="presentationType")
+
+    @property
+    def pub_type(self) -> PublicationType | None:
+        """Get publication type as enum."""
+        try:
+            return PublicationType(self.type)
+        except ValueError:
+            return None
 
     @property
     def icon(self) -> str:
         """Get icon class for this publication type."""
-        return TYPE_ICONS.get(self.type, "fa-file")
+        if self.pub_type:
+            return TYPE_ICONS.get(self.pub_type, "fa-file")
+        return "fa-file"
 
     @property
     def date_sort_key(self) -> tuple[int, int, int]:
@@ -85,7 +105,6 @@ class Course(BaseModel):
     slug: str
     name: str
     school: str
-    school_short: str
     year: int
     lectures: list[Publication] = Field(default_factory=list)
     sections: dict[str, list[Publication]] = Field(default_factory=dict)
@@ -96,13 +115,16 @@ class Course(BaseModel):
         name: str,
         school: str,
         lectures: list[Publication],
-        school_mapping: dict[str, str],
     ) -> Course:
         """Create course from list of lectures."""
-        sorted_lectures = sorted(lectures, key=lambda p: p.date_sort_key)
+        # Sort by date, then by title for stable ordering
+        sorted_lectures = sorted(lectures, key=lambda p: (*p.date_sort_key, p.title))
         year = min(lec.year for lec in sorted_lectures)
-        school_short = school_mapping.get(school, school)
-        slug = f"{year}-{slugify(school_short)}-{slugify(name)}"
+        slug_parts = [str(year)]
+        if school:
+            slug_parts.append(slugify(school))
+        slug_parts.append(slugify(name))
+        slug = "-".join(slug_parts)
 
         sections: dict[str, list[Publication]] = {}
         for lec in sorted_lectures:
@@ -113,11 +135,32 @@ class Course(BaseModel):
             slug=slug,
             name=name,
             school=school,
-            school_short=school_short,
             year=year,
             lectures=sorted_lectures,
             sections=sections,
         )
+
+    @property
+    def tags(self) -> set[str]:
+        """Aggregate all tags from lectures."""
+        result: set[str] = set()
+        for lec in self.lectures:
+            result.update(lec.tags)
+        return result
+
+    @property
+    def latest_date(self) -> tuple[int, int, int]:
+        """Get date of the latest lecture for sorting."""
+        if not self.lectures:
+            return (0, 0, 0)
+        return max(lec.date_sort_key for lec in self.lectures)
+
+
+class Group(BaseModel):
+    """Group for main page grouping by tags."""
+
+    name: str
+    tags: list[str] = Field(default_factory=list)
 
 
 class SectionFilter(BaseModel):
@@ -136,18 +179,31 @@ class Section(BaseModel):
     group_by: list[str] = Field(default_factory=lambda: ["year"])
 
 
+class Contacts(BaseModel):
+    """Contact information."""
+
+    email: str | None = None
+    github: str | None = None
+    scholar: str | None = None
+    linkedin: str | None = None
+    twitter: str | None = None
+
+
 class SiteConfig(BaseModel):
     """Site configuration."""
 
     author: str
+    bio: str | None = None
+    contacts: Contacts | None = None
 
 
 class ArchiveConfig(BaseModel):
     """Full archive.yaml configuration."""
 
     site: SiteConfig
-    schools: dict[str, str] = Field(default_factory=dict)
+    groups: list[Group] = Field(default_factory=list)
     sections: list[Section] = Field(default_factory=list)
+    aliases: dict[str, list[str]] = Field(default_factory=dict)
 
     @classmethod
     def load(cls, path: Path) -> ArchiveConfig:
@@ -157,6 +213,24 @@ class ArchiveConfig(BaseModel):
         with path.open() as f:
             data = yaml.safe_load(f)
         return cls.model_validate(data)
+
+    def normalize(self, value: str) -> str:
+        """Normalize value using aliases. Return canonical form."""
+        for canonical, variants in self.aliases.items():
+            if value == canonical or value in variants:
+                return canonical
+        return value
+
+    def normalize_list(self, values: list[str]) -> list[str]:
+        """Normalize list of values, preserving order and removing duplicates."""
+        seen: set[str] = set()
+        result: list[str] = []
+        for v in values:
+            normalized = self.normalize(v)
+            if normalized not in seen:
+                seen.add(normalized)
+                result.append(normalized)
+        return result
 
 
 class PublicationsData(BaseModel):
@@ -183,11 +257,20 @@ class PublicationsData(BaseModel):
 
 
 def slugify(text: str) -> str:
-    """Convert text to URL-safe slug."""
+    """Convert text to ASCII URL-safe slug with transliteration."""
     import re
 
+    from transliterate import translit
+    from transliterate.exceptions import LanguageDetectionError
+
     text = text.lower().strip()
-    text = re.sub(r"[^\w\s-]", "", text)
+
+    try:
+        text = translit(text, reversed=True)
+    except LanguageDetectionError:
+        pass
+
+    text = re.sub(r"[^a-z0-9\s-]", "", text)
     text = re.sub(r"[\s_]+", "-", text)
     return re.sub(r"-+", "-", text).strip("-")
 
