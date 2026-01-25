@@ -107,9 +107,10 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
         tags=[tag["tag"] for tag in data.get("tags", [])],
         url=empty_to_none(data.get("url")),
         language=normalize_language(data.get("language")),
-        course=empty_to_none(data.get("meetingName")),
+        course=empty_to_none(data.get("series")),
         school=empty_to_none(data.get("place")),
         section=empty_to_none(data.get("sessionTitle")),
+        presentationType=empty_to_none(data.get("presentationType")),
     )
 
 
