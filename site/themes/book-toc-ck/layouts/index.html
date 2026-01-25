@@ -1,16 +1,7 @@
 {{ define "main" }}
   {{- .Content -}}
 
-  {{- with .Params.research }}
-    {{- partial "group_type.html" (dict "title" "Research" "items" .) -}}
-  {{- end -}}
-
-  {{- $teaching := site.GetPage "/teaching" -}}
-  {{- with $teaching.Pages }}
-    {{- partial "group_type.html" (dict "title" "Teaching" "pages" .) -}}
-  {{- end -}}
-
-  {{- with .Params.popscience }}
-    {{- partial "group_type.html" (dict "title" "Popscience" "items" .) -}}
+  {{- range .Params.groups }}
+    {{- partial "group_type.html" (dict "title" .name "items" .items) -}}
   {{- end -}}
 {{ end }}

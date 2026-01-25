@@ -1,16 +1,5 @@
-{{- if site.Params.stats.show -}}
+{{- with site.Data.stats -}}
 <div class="margin-stats">
-  {{- with site.Params.stats.text -}}
-    {{ . }}
-  {{- else -}}
-    {{- $papers := site.Params.stats.papers | default 0 -}}
-    {{- $courses := site.Params.stats.courses | default 0 -}}
-    {{- $years := site.Params.stats.years | default "" -}}
-    {{- if $papers }}{{ $papers }} papers{{ end -}}
-    {{- if and $papers $courses }} · {{ end -}}
-    {{- if $courses }}{{ $courses }} courses{{ end -}}
-    {{- if and (or $papers $courses) $years }} · {{ end -}}
-    {{- if $years }}{{ $years }}{{ end -}}
-  {{- end -}}
+  {{- .papers }} papers · {{ .courses }} courses · {{ .year_start }}–{{ .year_end -}}
 </div>
 {{- end -}}
