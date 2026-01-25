@@ -51,20 +51,22 @@ def course_to_item(course: Course, config: ArchiveConfig) -> dict:
     }
 
 
+def lecture_to_item(lec: Publication) -> dict:
+    """Convert lecture publication to item dict."""
+    item = {"title": lec.title, "url": lec.url or ""}
+    if lec.pdf:
+        item["pdf"] = lec.pdf
+    return item
+
+
 def course_to_card(course: Course, config: ArchiveConfig) -> dict:
     """Convert course to card dict with lectures (teaching page)."""
-    lectures = []
-    for lec in course.lectures:
-        item = {"title": lec.title, "url": lec.url or ""}
-        if lec.pdf:
-            item["pdf"] = lec.pdf
-        lectures.append(item)
     return {
         "title": config.normalize(course.name),
         "slug": course.slug,
         "year": course.year,
         "lectures_count": len(course.lectures),
-        "lectures": lectures,
+        "lectures": [lecture_to_item(lec) for lec in course.lectures],
     }
 
 
@@ -199,6 +201,42 @@ def write_frontmatter(path: Path, data: dict, content: str = "") -> None:
     log.debug(f"Wrote {path}")
 
 
+def match_pubs_by_tags(
+    pubs: list[Publication],
+    group_tags: set[str],
+    seen_ids: set[str],
+    config: ArchiveConfig,
+) -> list[Publication]:
+    """Match publications by tags, updating seen_ids."""
+    matched = []
+    for pub in pubs:
+        if pub.id in seen_ids:
+            continue
+        pub_tags = set(config.normalize_list(pub.tags))
+        if pub_tags & group_tags:
+            matched.append(pub)
+            seen_ids.add(pub.id)
+    return matched
+
+
+def match_courses_by_tags(
+    courses: list[Course],
+    group_tags: set[str],
+    seen_slugs: set[str],
+    config: ArchiveConfig,
+) -> list[Course]:
+    """Match courses by tags (any lecture tag), updating seen_slugs."""
+    matched = []
+    for course in courses:
+        if course.slug in seen_slugs:
+            continue
+        course_tags = {config.normalize(t) for t in course.tags}
+        if course_tags & group_tags:
+            matched.append(course)
+            seen_slugs.add(course.slug)
+    return matched
+
+
 def group_items(
     standalone_pubs: list[Publication],
     courses: list[Course],
@@ -211,45 +249,23 @@ def group_items(
 
     for group in config.groups:
         group_tags = {config.normalize(t) for t in group.tags}
-
-        # Find matching standalone publications
-        matched_pubs = []
-        for pub in standalone_pubs:
-            if pub.id in seen_pub_ids:
-                continue
-            pub_tags = set(config.normalize_list(pub.tags))
-            if pub_tags & group_tags:
-                matched_pubs.append(pub)
-                seen_pub_ids.add(pub.id)
-
-        # Find matching courses (course matches if ANY lecture has matching tag)
-        matched_courses = []
-        for course in courses:
-            if course.slug in seen_course_slugs:
-                continue
-            course_tags = {config.normalize(t) for t in course.tags}
-            if course_tags & group_tags:
-                matched_courses.append(course)
-                seen_course_slugs.add(course.slug)
+        matched_pubs = match_pubs_by_tags(standalone_pubs, group_tags, seen_pub_ids, config)
+        matched_courses = match_courses_by_tags(courses, group_tags, seen_course_slugs, config)
 
         if matched_pubs or matched_courses:
-            groups_data.append(
-                {
-                    "name": group.name,
-                    "items": group_by_year(matched_pubs, matched_courses, config),
-                }
-            )
+            groups_data.append({
+                "name": group.name,
+                "items": group_by_year(matched_pubs, matched_courses, config),
+            })
 
     # Other: items not matching any group
     other_pubs = [p for p in standalone_pubs if p.id not in seen_pub_ids]
     other_courses = [c for c in courses if c.slug not in seen_course_slugs]
     if other_pubs or other_courses:
-        groups_data.append(
-            {
-                "name": "Other",
-                "items": group_by_year(other_pubs, other_courses, config),
-            }
-        )
+        groups_data.append({
+            "name": "Other",
+            "items": group_by_year(other_pubs, other_courses, config),
+        })
 
     return groups_data
 
@@ -299,6 +315,39 @@ def generate_section(
     log.info(f"Generated {clean_path}/_index.md ({len(publications)} publications)")
 
 
+def group_courses_by_school(courses: list[Course]) -> dict[str, list[Course]]:
+    """Group courses by school, sorted by latest date."""
+    by_school: dict[str, list[Course]] = {}
+    for course in courses:
+        by_school.setdefault(course.school, []).append(course)
+    return by_school
+
+
+def generate_course_page(
+    teaching_dir: Path,
+    course: Course,
+    config: ArchiveConfig,
+) -> None:
+    """Generate individual course page."""
+    lectures_data = []
+    for lec in course.lectures:
+        item = lecture_to_item(lec)
+        item["section"] = config.normalize(lec.section) if lec.section else ""
+        lectures_data.append(item)
+
+    course_data = {
+        "title": config.normalize(course.name),
+        "type": "course",
+        "layout": "course/single",
+        "slug": course.slug,
+        "school": course.school,
+        "year": course.year,
+        "lectures_count": len(course.lectures),
+        "lectures": lectures_data,
+    }
+    write_frontmatter(teaching_dir / f"{course.slug}.md", course_data)
+
+
 def generate_teaching(
     content_dir: Path,
     courses: list[Course],
@@ -306,11 +355,7 @@ def generate_teaching(
 ) -> None:
     """Generate teaching section with course pages."""
     teaching_dir = content_dir / "teaching"
-
-    # Group courses by school, sorted by latest course date
-    by_school: dict[str, list[Course]] = {}
-    for course in courses:
-        by_school.setdefault(course.school, []).append(course)
+    by_school = group_courses_by_school(courses)
 
     # Sort schools by their latest course date (most recent first)
     schools_sorted = sorted(
@@ -322,12 +367,10 @@ def generate_teaching(
     schools_data = []
     for school in schools_sorted:
         school_courses = sorted(by_school[school], key=lambda c: c.latest_date, reverse=True)
-        schools_data.append(
-            {
-                "name": school,
-                "courses": [course_to_card(c, config) for c in school_courses],
-            }
-        )
+        schools_data.append({
+            "name": school,
+            "courses": [course_to_card(c, config) for c in school_courses],
+        })
 
     # Teaching index
     data = {
@@ -341,29 +384,7 @@ def generate_teaching(
 
     # Individual course pages
     for course in courses:
-        # Lectures sorted chronologically (first lecture at top)
-        lectures_data = []
-        for lec in course.lectures:  # already sorted by date_sort_key in Course.from_lectures
-            item = {
-                "title": lec.title,
-                "url": lec.url or "",
-                "section": config.normalize(lec.section) if lec.section else "",
-            }
-            if lec.pdf:
-                item["pdf"] = lec.pdf
-            lectures_data.append(item)
-
-        course_data = {
-            "title": config.normalize(course.name),
-            "type": "course",
-            "layout": "course/single",
-            "slug": course.slug,
-            "school": course.school,
-            "year": course.year,
-            "lectures_count": len(course.lectures),
-            "lectures": lectures_data,
-        }
-        write_frontmatter(teaching_dir / f"{course.slug}.md", course_data)
+        generate_course_page(teaching_dir, course, config)
 
     log.info(f"Generated {len(courses)} course pages")
 
