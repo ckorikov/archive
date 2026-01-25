@@ -182,30 +182,22 @@ a {
   color: var(--c-accent);
 }
 
-.error-message {
-  color: var(--c-ink-medium);
-  margin-top: var(--space-lg);
-}
-
-.error-message a {
-  color: var(--c-ink);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.error-message a:hover {
-  color: var(--c-accent);
+.error-404 {
+  font-size: 4rem;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--c-ink-light);
 }
 
 /* ==========================================================================
-   8. Category (main page grouping)
+   8. Group Type (main page grouping)
    ========================================================================== */
 
-.category {
+.group_type {
   margin-bottom: var(--space-2xl);
 }
 
-.category__title {
+.group_type__title {
   font-size: var(--text-sm);
   font-weight: 400;
   letter-spacing: 0.2em;
@@ -218,18 +210,18 @@ a {
 }
 
 /* ==========================================================================
-   9. Year Group
+   9. Group Year
    ========================================================================== */
 
-.year {
+.group_year {
   margin-bottom: var(--space-lg);
 }
 
-.year:last-child {
+.group_year:last-child {
   margin-bottom: 0;
 }
 
-.year__title {
+.group_year__title {
   font-size: var(--text-base);
   font-weight: 400;
   font-style: italic;
@@ -246,21 +238,22 @@ a {
 }
 
 .item {
-  display: block;
-  width: fit-content;
   padding: var(--space-xs) 0;
-  transition: color 0.15s ease;
-}
-
-.item:hover {
-  color: var(--c-accent);
 }
 
 .item__title {
   font-weight: 400;
+  transition: color 0.15s ease;
 }
 
-.item__authors {
+.item__title:hover {
+  color: var(--c-accent);
+}
+
+.item__authors,
+.item__tags,
+.item__sep,
+.item__meta {
   font-size: var(--text-sm);
   font-style: italic;
   color: var(--c-ink-light);
@@ -273,32 +266,24 @@ a {
   margin-left: var(--space-sm);
 }
 
-.item__tags {
-  font-size: var(--text-sm);
-  font-style: italic;
-  color: var(--c-ink-light);
+a.item__pdf {
+  transition: color 0.15s ease;
 }
 
-.item__tags::before {
-  content: " — ";
+a.item__pdf:hover {
+  color: var(--c-accent);
 }
 
-.item__meta {
-  font-size: var(--text-sm);
-  font-style: italic;
-  color: var(--c-ink-light);
-  margin-left: var(--space-sm);
-}
 
 /* ==========================================================================
-   11. University Group (teaching list)
+   11. School Group (teaching list)
    ========================================================================== */
 
-.university {
+.school {
   margin-bottom: var(--space-2xl);
 }
 
-.university__title {
+.school__title {
   font-size: var(--text-base);
   font-weight: 400;
   font-style: italic;
@@ -359,7 +344,7 @@ a {
 }
 
 .course__tag + .course__tag::before {
-  content: " · ";
+  content: ", ";
 }
 
 /* Lectures preview in course card */
@@ -370,15 +355,16 @@ a {
 }
 
 .course__lectures .lecture {
-  display: block;
-  width: fit-content;
   padding: var(--space-xs) 0;
   font-size: var(--text-sm);
   color: var(--c-ink-medium);
+}
+
+.course__lectures .lecture__title {
   transition: color 0.15s ease;
 }
 
-.course__lectures .lecture:hover {
+.course__lectures .lecture__title:hover {
   color: var(--c-accent);
 }
 
@@ -386,28 +372,15 @@ a {
   font-size: var(--text-xs);
   color: var(--c-pdf);
   margin-left: var(--space-sm);
+  transition: color 0.15s ease;
+}
+
+.course__lectures .lecture__pdf:hover {
+  color: var(--c-accent);
 }
 
 /* ==========================================================================
-   13. Breadcrumb (course page)
-   ========================================================================== */
-
-.breadcrumb {
-  font-size: var(--text-sm);
-  color: var(--c-ink-light);
-  margin-bottom: var(--space-lg);
-}
-
-.breadcrumb a:hover {
-  color: var(--c-ink);
-}
-
-.breadcrumb__sep {
-  margin: 0 var(--space-sm);
-}
-
-/* ==========================================================================
-   14. Course Header (course page)
+   13. Course Header (course page)
    ========================================================================== */
 
 .course-header {
@@ -442,11 +415,11 @@ a {
 }
 
 .course-header__tag + .course-header__tag::before {
-  content: " · ";
+  content: ", ";
 }
 
 /* ==========================================================================
-   15. Syllabus (course page)
+   14. Syllabus (course page)
    ========================================================================== */
 
 .syllabus {
@@ -482,11 +455,6 @@ a {
   gap: var(--space-sm);
   align-items: baseline;
   padding: var(--space-sm) 0;
-  transition: color 0.15s ease;
-}
-
-.syllabus .lecture:hover {
-  color: var(--c-accent);
 }
 
 .syllabus .lecture__num {
@@ -496,21 +464,27 @@ a {
   text-align: right;
 }
 
-.syllabus .lecture:hover .lecture__num {
-  color: var(--c-accent);
-}
-
 .syllabus .lecture__title {
   font-weight: 400;
+  transition: color 0.15s ease;
+}
+
+.syllabus .lecture__title:hover {
+  color: var(--c-accent);
 }
 
 .syllabus .lecture__pdf {
   font-size: var(--text-xs);
   color: var(--c-pdf);
+  transition: color 0.15s ease;
+}
+
+.syllabus .lecture__pdf:hover {
+  color: var(--c-accent);
 }
 
 /* ==========================================================================
-   16. Footer
+   15. Footer
    ========================================================================== */
 
 .footer {
@@ -520,10 +494,10 @@ a {
 }
 
 /* ==========================================================================
-   17. Responsive
+   16. Responsive
    ========================================================================== */
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
   .margin-stats {
     display: none;
   }

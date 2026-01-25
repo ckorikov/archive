@@ -4,12 +4,12 @@
   {{- .Content -}}
 
   {{- range .Pages.GroupByParam "school" -}}
-    <section class="university">
-      <h2 class="university__title">{{ .Key }}</h2>
+    <section class="school">
+      <h2 class="school__title">{{ .Key }}</h2>
 
       {{- range .Pages -}}
         {{- if .Params.lectures }}
-          {{- partial "course-card.html" . -}}
+          {{- partial "course_card.html" . -}}
         {{- else }}
           <div class="items">
             {{- partial "item.html" (dict

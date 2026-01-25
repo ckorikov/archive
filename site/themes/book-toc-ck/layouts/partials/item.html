@@ -1,14 +1,23 @@
-<a href="{{ .url | default "#" }}" class="item">
-  <span class="item__title">{{ .title }}</span>
-  {{- if .pdf }}<span class="item__pdf">pdf</span>{{ end -}}
+<div class="item">
+  <a href="{{ .url | default "#" }}" class="item__title">{{ .title }}</a>
+  {{- with .pdf }}
+    {{- $pdfUrl := $.url | default "#" -}}
+    {{- if eq (printf "%T" .) "string" }}
+      {{- $pdfUrl = . -}}
+    {{- end }}
+    <a href="{{ $pdfUrl }}" class="item__pdf">pdf</a>
+  {{- end -}}
+  {{- $hasDetails := or .authors .tags .meta -}}
+  {{- if $hasDetails }}<br>{{ end -}}
   {{- with .authors }}
-    <br>
     <span class="item__authors">{{ delimit . ", " }}</span>
   {{- end -}}
-  {{- with .tags }}
-    <span class="item__tags">{{ delimit . ", " }}</span>
-  {{- end -}}
+  {{- if and .authors (or .tags .meta) }}<span class="item__sep"> — </span>{{ end -}}
   {{- with .meta }}
     <span class="item__meta">{{ . }}</span>
   {{- end -}}
-</a>
+  {{- if and .meta .tags }}<span class="item__sep"> — </span>{{ end -}}
+  {{- with .tags }}
+    <span class="item__tags">{{ delimit . ", " }}</span>
+  {{- end -}}
+</div>
