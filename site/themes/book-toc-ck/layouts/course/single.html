@@ -6,7 +6,7 @@
     {{- with .Params.school }}{{ $meta = $meta | append . }}{{ end -}}
     {{- with .Params.year }}{{ $meta = $meta | append . }}{{ end -}}
     {{- if $meta }}
-      <div class="course-header__meta">{{ delimit $meta " · " }}</div>
+      <div class="course-header__meta">{{ delimit $meta ", " }}</div>
     {{- end -}}
 
     {{- with .Params.description }}
@@ -37,7 +37,7 @@
           {{- end -}}
         {{- end -}}
 
-        {{- partial "lecture-link.html" (dict
+        {{- partial "lecture_link.html" (dict
           "num" (add $i 1)
           "title" $lecture.title
           "url" $lecture.url
