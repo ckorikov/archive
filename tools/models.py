@@ -36,6 +36,8 @@ TYPE_ICONS: dict[str, str] = {
     "preprint": "fa-file-alt",
 }
 
+RESEARCH_TYPES: set[str] = {"journalArticle", "conferencePaper", "thesis", "preprint", "report"}
+
 
 class Author(BaseModel):
     """Publication author."""
