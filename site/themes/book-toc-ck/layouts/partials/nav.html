@@ -1,4 +1,4 @@
-{{- range site.Data.nav -}}
+{{- range (site.GetPage "/").Params.nav -}}
   {{- $isActive := false -}}
   {{- if eq .path "/" -}}
     {{- $isActive = eq $.RelPermalink "/" -}}
