@@ -14,7 +14,7 @@ from typing import Any
 import click
 from pyzotero import zotero
 
-from models import Author, Publication, PublicationsData, get_data_dir
+from models import Author, Publication, PublicationsData, get_static_data_dir
 
 log = logging.getLogger(__name__)
 
@@ -196,7 +196,7 @@ def main(output: str | None, dry_run: bool) -> None:
             print(f"  {pub.year}: {pub.title[:50]}...")
         return
 
-    output_path = Path(output) if output else get_data_dir() / "publications.json"
+    output_path = Path(output) if output else get_static_data_dir() / "publications.json"
     PublicationsData(publications=publications).save(output_path)
     log.info(f"Saved to {output_path}")
 

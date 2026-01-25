@@ -281,9 +281,9 @@ def get_project_root() -> Path:
     return Path(__file__).parent.parent
 
 
-def get_data_dir() -> Path:
-    """Get data directory path."""
-    return get_project_root() / "data"
+def get_static_data_dir() -> Path:
+    """Get static data directory path (for publications.json)."""
+    return get_project_root() / "site" / "static" / "data"
 
 
 def get_content_dir() -> Path:

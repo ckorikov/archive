@@ -17,7 +17,7 @@ from models import (
     PublicationsData,
     get_archive_config_path,
     get_content_dir,
-    get_data_dir,
+    get_static_data_dir,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -275,14 +275,18 @@ def generate_index(
     publications: list[Publication],
     courses: list[Course],
     config: ArchiveConfig,
+    stats: dict,
 ) -> None:
-    """Generate main index page with groups."""
+    """Generate main index page with groups, stats, and nav."""
     standalone = filter_publications(publications, config, has_course=False)
     groups_data = group_items(standalone, courses, config)
+    nav_items = [{"path": s.path, "label": s.label} for s in config.sections]
 
     data = {
         "title": "Publications",
         "layout": "index",
+        "stats": stats,
+        "nav": nav_items,
         "groups": groups_data,
     }
     write_frontmatter(content_dir / "_index.md", data)
@@ -412,26 +416,6 @@ def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     log.info("Generated about/_index.md")
 
 
-def generate_data_files(
-    data_dir: Path,
-    config: ArchiveConfig,
-    stats: dict,
-) -> None:
-    """Generate data files for Hugo (nav, stats)."""
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    # Navigation
-    nav_items = [{"path": s.path, "label": s.label} for s in config.sections]
-    with (data_dir / "nav.yaml").open("w") as f:
-        yaml.dump(nav_items, f, allow_unicode=True)
-
-    # Stats
-    with (data_dir / "stats.yaml").open("w") as f:
-        yaml.dump(stats, f, allow_unicode=True)
-
-    log.info("Generated nav.yaml, stats.yaml")
-
-
 def generate_all(
     publications: list[Publication],
     config: ArchiveConfig,
@@ -449,12 +433,8 @@ def generate_all(
     courses = compute_courses(publications, config)
     stats = compute_stats(publications, courses)
 
-    # Generate data files for Hugo
-    data_dir = content_dir.parent / "data"
-    generate_data_files(data_dir, config, stats)
-
-    # Generate main index
-    generate_index(content_dir, publications, courses, config)
+    # Generate main index (includes stats and nav)
+    generate_index(content_dir, publications, courses, config, stats)
 
     # Generate sections from config
     for section in config.sections:
@@ -515,7 +495,7 @@ def main(
     clean: bool,
 ) -> None:
     """Generate Hugo content from publications and config."""
-    pub_path = Path(publications) if publications else get_data_dir() / "publications.json"
+    pub_path = Path(publications) if publications else get_static_data_dir() / "publications.json"
     config_path = Path(config) if config else get_archive_config_path()
     content_dir = Path(output) if output else get_content_dir()
 

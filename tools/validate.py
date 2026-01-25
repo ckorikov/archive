@@ -13,7 +13,7 @@ from models import (
     ArchiveConfig,
     PublicationsData,
     get_archive_config_path,
-    get_data_dir,
+    get_static_data_dir,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -70,7 +70,7 @@ def print_stats(data: PublicationsData) -> None:
 @click.option("-c", "--config", type=click.Path(), help="Path to archive.yaml")
 def main(publications: str | None, config: str | None) -> None:
     """Validate data files and show statistics."""
-    pub_path = Path(publications) if publications else get_data_dir() / "publications.json"
+    pub_path = Path(publications) if publications else get_static_data_dir() / "publications.json"
     config_path = Path(config) if config else get_archive_config_path()
 
     errors = 0
