@@ -1,235 +1,193 @@
 #!/usr/bin/env python3
+"""Fetch publications from Zotero and save to publications.json."""
+
 import logging
-import pickle
+import os
 import re
-from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from multiprocessing import Manager, Pool, cpu_count
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import click
-import pandas as pd
 from pyzotero import zotero
-from tqdm import tqdm
-from transliterate import translit
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
+from models import Author, Publication, PublicationsData, get_data_dir
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+log = logging.getLogger(__name__)
+
+ZOTERO_API_KEY = os.environ.get("ZOTERO_API_KEY", "hTvqMYvC4Bjhm4xGHqyCTSWv")
+ZOTERO_LIBRARY_ID = int(os.environ.get("ZOTERO_LIBRARY_ID", "4809962"))
+ZOTERO_LIBRARY_TYPE = os.environ.get("ZOTERO_LIBRARY_TYPE", "user")
 
 
-@dataclass
-class Config:
-    api_key: str = "hTvqMYvC4Bjhm4xGHqyCTSWv"
-    library_id: int = 4809962
-    library_type: str = "user"
-    jobs: int = cpu_count()
-    cache: bool = False
-    output_json: str = "publications.json"
+def parse_date(date_str: str | None) -> tuple[int, int | None, int | None]:
+    """Parse Zotero date string into (year, month, day)."""
+    if not date_str:
+        return (0, None, None)
+
+    formats = ["%Y/%m/%d", "%Y-%m-%d", "%Y/%m", "%Y-%m", "%Y"]
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            if fmt in ("%Y/%m/%d", "%Y-%m-%d"):
+                return (dt.year, dt.month, dt.day)
+            if fmt in ("%Y/%m", "%Y-%m"):
+                return (dt.year, dt.month, None)
+            return (dt.year, None, None)
+        except ValueError:
+            continue
+
+    # Try to extract year from string
+    match = re.search(r"\b(19|20)\d{2}\b", date_str)
+    if match:
+        return (int(match.group()), None, None)
+
+    return (0, None, None)
+
+
+def normalize_language(lang: str | None) -> str:
+    """Normalize language string."""
+    if not lang:
+        return "english"
+    if "ru" in lang.lower():
+        return "russian"
+    return "english"
+
+
+def parse_item(data: dict) -> Publication | None:
+    """Parse Zotero item data into Publication."""
+    item_type = data.get("itemType", "")
+    if item_type in ("attachment", "note"):
+        return None
+
+    # Handle websiteType override (for github, colab, etc.)
+    if "websiteType" in data:
+        item_type = data["websiteType"].lower()
+
+    year, month, day = parse_date(data.get("date"))
+    if year == 0:
+        log.warning(f"Skipping item without year: {data.get('title', 'unknown')}")
+        return None
+
+    authors = [
+        Author(firstName=c.get("firstName", ""), lastName=c.get("lastName", ""))
+        for c in data.get("creators", [])
+        if c.get("creatorType") in ("author", "presenter", None)
+    ]
+
+    tags = [tag["tag"] for tag in data.get("tags", [])]
+
+    # Course-related fields (for presentations/lectures)
+    course = data.get("meetingName") or None
+    school = data.get("place") or None
+    section = data.get("sessionTitle") or None
+
+    # Clean empty strings
+    if course == "":
+        course = None
+    if school == "":
+        school = None
+    if section == "":
+        section = None
+
+    return Publication(
+        id=data["key"],
+        type=item_type,
+        year=year,
+        month=month,
+        day=day,
+        title=data.get("title", "Untitled"),
+        authors=authors,
+        tags=tags,
+        url=data.get("url") or None,
+        language=normalize_language(data.get("language")),
+        course=course,
+        school=school,
+        section=section,
+    )
+
+
+def fetch_item_details(zt: zotero.Zotero, key: str, retries: int = 3) -> dict:
+    """Fetch full details for a single item with retry."""
+    import time
+
+    for attempt in range(retries):
+        try:
+            return zt.item(key)
+        except Exception as e:
+            if attempt < retries - 1:
+                time.sleep(1)
+                continue
+            raise e
+
+
+def fetch_from_zotero(workers: int = 8) -> list[dict]:
+    """Fetch all items from Zotero library with full details."""
+    log.info(f"Fetching from Zotero library {ZOTERO_LIBRARY_ID}")
+    zt = zotero.Zotero(ZOTERO_LIBRARY_ID, ZOTERO_LIBRARY_TYPE, ZOTERO_API_KEY)
+    zt.add_parameters(sort="date")
+
+    # First pass: get list of items
+    items = zt.everything(zt.publications())
+    log.info(f"Fetched {len(items)} items, getting details with {workers} workers...")
+
+    # Second pass: get full details in parallel (includes tags)
+    keys = [item["data"]["key"] for item in items]
+    detailed_items = []
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(fetch_item_details, zt, key): key for key in keys}
+        for i, future in enumerate(as_completed(futures)):
+            detailed_items.append(future.result())
+            if (i + 1) % 20 == 0:
+                log.info(f"  {i + 1}/{len(keys)} items processed")
+
+    log.info(f"Fetched details for {len(detailed_items)} items")
+    return detailed_items
+
+
+def parse_items(items: list[dict]) -> list[Publication]:
+    """Parse Zotero items into Publications."""
+    publications = []
+    for item in items:
+        data = item.get("data", item)
+        pub = parse_item(data)
+        if pub:
+            publications.append(pub)
+    log.info(f"Parsed {len(publications)} publications")
+    return publications
 
 
 @click.command()
-@click.option("-j", "--jobs", type=int, default=cpu_count(), help="Number of jobs.")
-@click.option("-c", "--cache", type=bool, is_flag=True, default=False, help="Use cache.")
-def process_cli(**kwargs):
-    cfg = Config(**kwargs)
-    main(cfg)
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(),
+    default=None,
+    help="Output JSON file path",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Fetch and parse but don't save",
+)
+def main(output: str | None, dry_run: bool) -> None:
+    """Fetch publications from Zotero and save to JSON."""
+    items = fetch_from_zotero()
+    publications = parse_items(items)
 
+    if dry_run:
+        log.info("Dry run - not saving")
+        for pub in publications[:5]:
+            print(f"  {pub.year}: {pub.title[:50]}...")
+        return
 
-class Item:
-    def __init__(self, item: Dict) -> None:
-        self.key = item["key"]
-        self.type = item["itemType"]
-        self.title = item.get("title", None)
-        self.authors = [Item.name(author["firstName"], author["lastName"]) for author in item.get("creators", [])]
-        self.language = Item.normalize_language(item.get("language", None))
-        self.url = item.get("url", None)
-        self.year, self.month, self.day = Item.date(item["date"])
-        self.place = item.get("place", None)
-        self.tags = {tag["tag"] for tag in item.get("tags", {})}
-        self.group = item.get("meetingName", None)
-
-        self.review_type(item)
-        self.review_group()
-
-    @property
-    def identifier(self):
-        return Item.normalize(f"{self.year}-{self.title}-{self.type}")
-
-    def to_dict(self):
-        return {
-            "id": self.identifier,
-            "type": self.type,
-            "year": self.year,
-            "month": self.month,
-            "day": self.day,
-            "title": self.title,
-            "authors": list(self.authors),
-            "tags": list(self.tags),
-            "url": self.url,
-            "language": self.language,
-            "group": self.group,
-        }
-
-    def review_type(self, item: Dict):
-        if "websiteType" in item:
-            self.type = item["websiteType"].lower()
-
-    def review_group(self):
-        if self.group is not None:
-            if len(self.group) == 0:
-                self.group = None
-
-    def __repr__(self) -> str:
-        return f"[{self.type}] {self.title} ({self.date})"
-
-    @staticmethod
-    def name(first: str, second: str) -> str:
-        name = []
-        if first:
-            name.append(first)
-        if second:
-            name.append(second)
-        return " ".join(name)
-
-    @staticmethod
-    def normalize_language(lang: Optional[str]) -> str:
-        if lang is None:
-            return None
-        if "ru" in lang.lower():
-            return "russian"
-        else:
-            return "english"
-
-    def normalize(text: str) -> str:
-        text = text.lower()
-        text = translit(text, "ru", reversed=True)
-        text = text.replace("'", "")
-        text = text.replace("c++", "cpp")
-        text_list = []
-        for e in text:
-            text_list.append(e if e.isalnum() else "-")
-        text = "".join(text_list)
-        text = re.sub(r"(-)\1+", r"-", text)
-        text = text.lstrip("-")
-        text = text.rstrip("-")
-        return text
-
-    def date(date_str: str) -> Tuple[int, Optional[int], Optional[int]]:
-        try:
-            date = datetime.strptime(date_str, "%Y/%m/%d").date()
-            return date.year, date.month, date.day
-        except ValueError:
-            pass
-
-        try:
-            date = datetime.strptime(date_str, "%Y/%m").date()
-            return date.year, date.month, None
-        except ValueError:
-            pass
-
-        try:
-            date = datetime.strptime(date_str, "%Y").date()
-            return date.year, None, None
-        except ValueError:
-            pass
-
-
-class Cache:
-    def __init__(self, filename: str = ".cache") -> None:
-        self._filename = Path(filename)
-
-    def exists(self):
-        return self._filename.exists()
-
-    def load(self) -> Optional[List[Dict]]:
-        if not self.exists():
-            return None
-
-        with open(self._filename, "rb") as f:
-            return pickle.load(f)
-
-    def save(self, items: List[Dict]) -> List[Dict]:
-        with open(self._filename, "wb") as f:
-            pickle.dump(items, f)
-        return items
-
-
-def get_zotero_items(cfg: Config) -> List[Dict]:
-    logging.info(f"Download data from zotero library `{cfg.library_id}`")
-    zt = zotero.Zotero(cfg.library_id, cfg.library_type, cfg.api_key)
-    zt.add_parameters(sort="date")
-    return zt.everything(zt.publications())
-
-
-def get_element_data(args, retries: int = 3):
-    item, parameters = args
-    key = item["data"]["key"]
-    zt = parameters["zotero"]
-    try:
-        data = zt.item(key)
-    except Exception as e:
-        if retries > 0:
-            logging.warning(f"Retry {retries} for {key}")
-            return get_element_data(args, retries - 1)
-        else:
-            logging.error(f"Failed to get data for {key}")
-            raise e
-    return data
-
-
-def get_item_details(items: List[Dict], cfg: Config):
-    zt = zotero.Zotero(cfg.library_id, cfg.library_type, cfg.api_key)
-    with Manager() as manager:
-        with Pool(cfg.jobs) as pool:
-            parameters = manager.dict()
-            parameters["zotero"] = zt
-            data = [(item, parameters) for item in items]
-            items = list(tqdm(pool.imap_unordered(get_element_data, data), total=len(data)))
-    return items
-
-
-def get_items(cfg: Config):
-    items: List[Dict] = get_zotero_items(cfg)
-    items = get_item_details(items, cfg)
-    return items
-
-
-def parse_items(items: List[Dict], cfg: Config) -> List[Item]:
-    result = []
-    for item in items:
-        data = item["data"]
-        if data["itemType"] != "attachment":
-            result.append(Item(data))
-    return result
-
-
-def items_to_dataframe(items: List[Item], cfg: Config) -> pd.DataFrame:
-    list_of_dics = [i.to_dict() for i in items]
-    df = pd.DataFrame(list_of_dics)
-    df = df.astype({"year": "Int64", "month": "Int64", "day": "Int64"})
-    return df
-
-
-def export_json(filename: Path, items: List[Item], cfg: Config):
-    df = items_to_dataframe(items, cfg)
-    df.to_json(filename, force_ascii=False, orient="records", lines=False)
-
-
-def export_csv(filename: Path, items: List[Item], cfg: Config):
-    df = items_to_dataframe(items, cfg)
-    df.to_csv(filename)
-
-
-def main(cfg: Config):
-    if cfg.cache:
-        cache = Cache()
-        items = cache.load() if cache.exists() else cache.save(get_items(cfg))
-    else:
-        items = get_items(cfg)
-
-    items = parse_items(items, cfg)
-    export_json(cfg.output_json, items, cfg)
+    output_path = Path(output) if output else get_data_dir() / "publications.json"
+    data = PublicationsData(publications=publications)
+    data.save(output_path)
+    log.info(f"Saved to {output_path}")
 
 
 if __name__ == "__main__":
-    process_cli()
+    main()
