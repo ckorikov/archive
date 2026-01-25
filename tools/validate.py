@@ -9,9 +9,9 @@ import click
 from pydantic import ValidationError
 
 from models import (
+    RESEARCH_TYPES,
     ArchiveConfig,
     PublicationsData,
-    RESEARCH_TYPES,
     get_archive_config_path,
     get_data_dir,
 )
@@ -43,7 +43,7 @@ def validate_config(path: Path) -> ArchiveConfig | None:
 
     try:
         config = ArchiveConfig.load(path)
-        log.info(f"Validated config: {len(config.sections)} sections")
+        log.info(f"Validated config: {len(config.groups)} groups, {len(config.sections)} sections")
         return config
     except ValidationError as e:
         log.error(f"Config validation failed:\n{e}")
@@ -54,8 +54,9 @@ def print_stats(data: PublicationsData) -> None:
     """Print publication statistics."""
     pubs = data.publications
     years = [p.year for p in pubs]
-    papers = sum(1 for p in pubs if p.type in RESEARCH_TYPES)
-    courses = {p.course for p in pubs if p.course}
+    papers = sum(1 for p in pubs if p.pub_type in RESEARCH_TYPES)
+    # Count courses by unique (course, school) pairs
+    courses = {(p.course, p.school or "") for p in pubs if p.course}
 
     print("\n--- Statistics ---")
     print(f"papers: {papers}")
