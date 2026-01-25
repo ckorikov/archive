@@ -1,23 +1,27 @@
-<div class="item">
-  <a href="{{ .url | default "#" }}" class="item__title">{{ .title }}</a>
-  {{- with .pdf }}
-    {{- $pdfUrl := $.url | default "#" -}}
-    {{- if eq (printf "%T" .) "string" }}
-      {{- $pdfUrl = . -}}
-    {{- end }}
-    <a href="{{ $pdfUrl }}" class="item__pdf">pdf</a>
-  {{- end -}}
-  {{- $hasDetails := or .authors .tags .meta -}}
-  {{- if $hasDetails }}<br>{{ end -}}
-  {{- with .authors }}
-    <span class="item__authors">{{ delimit . ", " }}</span>
-  {{- end -}}
-  {{- if and .authors (or .tags .meta) }}<span class="item__sep"> — </span>{{ end -}}
-  {{- with .meta }}
-    <span class="item__meta">{{ . }}</span>
-  {{- end -}}
-  {{- if and .meta .tags }}<span class="item__sep"> — </span>{{ end -}}
-  {{- with .tags }}
-    <span class="item__tags">{{ delimit . ", " }}</span>
-  {{- end -}}
-</div>
+{{- if .is_course -}}
+  {{/* Course item */}}
+  <div class="item item--course">
+    <a href="/teaching/{{ .slug }}/" class="item__title">{{ .title }}</a>
+    <br>
+    <span class="item__meta">{{ with .school }}{{ . }}, {{ end }}{{ .year }}, {{ .lectures_count }} lectures</span>
+  </div>
+{{- else -}}
+  {{/* Regular publication item */}}
+  <div class="item">
+    <a href="{{ .url | default "#" }}" class="item__title">{{ .title }}</a>
+    {{- with .pdf }}<a href="{{ . }}" class="item__pdf">pdf</a>{{ end -}}
+    {{- $hasDetails := or .authors .tags .meta -}}
+    {{- if $hasDetails }}<br>{{ end -}}
+    {{- with .authors }}
+      <span class="item__authors">{{ delimit . ", " }}</span>
+    {{- end -}}
+    {{- if and .authors (or .tags .meta) }}<span class="item__sep"> — </span>{{ end -}}
+    {{- with .meta }}
+      <span class="item__meta">{{ . }}</span>
+    {{- end -}}
+    {{- if and .meta .tags }}<span class="item__sep"> — </span>{{ end -}}
+    {{- with .tags }}
+      <span class="item__tags">{{ delimit . ", " }}</span>
+    {{- end -}}
+  </div>
+{{- end -}}

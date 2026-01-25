@@ -1,14 +1,11 @@
-{{- range site.Menus.main -}}
-  {{- $url := .URL | default .PageRef -}}
+{{- range site.Data.nav -}}
   {{- $isActive := false -}}
-  {{- if $url -}}
-    {{- if eq $url "/" -}}
-      {{- $isActive = eq $.RelPermalink "/" -}}
-    {{- else -}}
-      {{- $isActive = hasPrefix $.RelPermalink $url -}}
-    {{- end -}}
+  {{- if eq .path "/" -}}
+    {{- $isActive = eq $.RelPermalink "/" -}}
+  {{- else -}}
+    {{- $isActive = hasPrefix $.RelPermalink .path -}}
   {{- end -}}
-  <a href="{{ $url }}" class="nav__item{{ if $isActive }} is-active{{ end }}">
-    {{- .Name -}}
+  <a href="{{ .path }}" class="nav__item{{ if $isActive }} is-active{{ end }}">
+    {{- .label -}}
   </a>
 {{- end -}}

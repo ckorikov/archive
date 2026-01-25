@@ -1,0 +1,21 @@
+{{ define "main" }}
+<div class="about">
+  <h1 class="page-title">{{ .Title }}</h1>
+
+  <div class="about__bio">
+    {{- .Content }}
+  </div>
+
+  {{- with .Params.contacts }}
+  <p class="about__contacts">
+    {{- $items := slice }}
+    {{- with .email }}{{ $items = $items | append (printf "<a href=\"mailto:%s\">%s</a>" . .) }}{{ end }}
+    {{- with .github }}{{ $items = $items | append (printf "<a href=\"https://github.com/%s\" target=\"_blank\" rel=\"noopener\">GitHub</a>" .) }}{{ end }}
+    {{- with .scholar }}{{ $items = $items | append (printf "<a href=\"https://scholar.google.com/citations?user=%s\" target=\"_blank\" rel=\"noopener\">Scholar</a>" .) }}{{ end }}
+    {{- with .linkedin }}{{ $items = $items | append (printf "<a href=\"https://linkedin.com/in/%s\" target=\"_blank\" rel=\"noopener\">LinkedIn</a>" .) }}{{ end }}
+    {{- with .twitter }}{{ $items = $items | append (printf "<a href=\"https://twitter.com/%s\" target=\"_blank\" rel=\"noopener\">Twitter</a>" .) }}{{ end }}
+    {{ delimit $items " · " | safeHTML }}
+  </p>
+  {{- end }}
+</div>
+{{ end }}
