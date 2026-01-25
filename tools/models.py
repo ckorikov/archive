@@ -44,6 +44,8 @@ RESEARCH_TYPES: set[PublicationType] = {
     PublicationType.REPORT,
 }
 
+COURSE_TYPES: set[str] = {"Lecture", "GitHub"}
+
 
 class Author(BaseModel):
     """Publication author."""
@@ -258,6 +260,7 @@ class PublicationsData(BaseModel):
 
 def slugify(text: str) -> str:
     """Convert text to ASCII URL-safe slug with transliteration."""
+    import contextlib
     import re
 
     from transliterate import translit
@@ -265,10 +268,8 @@ def slugify(text: str) -> str:
 
     text = text.lower().strip()
 
-    try:
+    with contextlib.suppress(LanguageDetectionError):
         text = translit(text, reversed=True)
-    except LanguageDetectionError:
-        pass
 
     text = re.sub(r"[^a-z0-9\s-]", "", text)
     text = re.sub(r"[\s_]+", "-", text)
