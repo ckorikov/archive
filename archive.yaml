@@ -1,0 +1,43 @@
+site:
+  author: "Constantine Korikov"
+  bio: "Researcher and educator. Huawei, MIPT, ex-Intel, ex-Syntacore, ex-Healbe, ex-Polytech."
+  contacts:
+    github: "ckorikov"
+    scholar: "DgJb92EAAAAJ"
+
+# Groups for main page (order matters, first match wins)
+groups:
+  - name: "Research"
+    tags: [phd, master, casimir, conference, intel]
+  - name: "Teaching"
+    tags: [polytech, jiangsu, mipt, bar]
+  - name: "Popscience"
+    tags: [popscience, habr, xakep]
+  - name: "Fun"
+    tags: [fun, wolfram, hackathon, winenot, huawei]
+
+# Aliases: canonical -> [variants]
+aliases:
+  "MIPT":
+    - "Moscow Institute of Physics and Technology"
+  "Polytech":
+    - "Saint Petersburg Polytechnic University"
+    - "SPbPU"
+
+sections:
+  - path: "/"
+    label: "All"
+    group_by: [type, year]
+
+  - path: "/teaching/"
+    label: "Teaching"
+    filter:
+      has_course: true
+    group_by: [school, year]
+
+  - path: "/casimir/"
+    label: "Casimir Physics"
+    filter:
+      tag: casimir
+    group_by: [year]
+
