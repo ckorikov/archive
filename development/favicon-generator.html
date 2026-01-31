@@ -343,8 +343,8 @@
     </div>
 
     <div class="export-section">
-        <button class="export-btn" id="export-all">Скачать все PNG</button>
-        <p class="export-note">ZIP-архив со всеми файлами + site.webmanifest</p>
+        <button class="export-btn" id="export-all">Скачать всё</button>
+        <p class="export-note">ZIP-архив: PNG, favicon.ico, site.webmanifest</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -457,6 +457,55 @@
             });
         });
 
+        // Canvas to PNG ArrayBuffer
+        function canvasToPngBuffer(canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+            const binary = atob(dataUrl.split(',')[1]);
+            const buffer = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                buffer[i] = binary.charCodeAt(i);
+            }
+            return buffer;
+        }
+
+        // Build ICO from PNG buffers (ICO with embedded PNGs)
+        function buildIco(pngBuffers) {
+            const count = pngBuffers.length;
+            const headerSize = 6;
+            const dirEntrySize = 16;
+            const dirSize = dirEntrySize * count;
+            let dataOffset = headerSize + dirSize;
+
+            const sizes = [32, 16];
+            const totalSize = dataOffset + pngBuffers.reduce((s, b) => s + b.length, 0);
+            const ico = new Uint8Array(totalSize);
+            const view = new DataView(ico.buffer);
+
+            // Header
+            view.setUint16(0, 0, true);     // reserved
+            view.setUint16(2, 1, true);     // type: icon
+            view.setUint16(4, count, true); // image count
+
+            // Directory entries + data
+            for (let i = 0; i < count; i++) {
+                const entryOffset = headerSize + i * dirEntrySize;
+                const dim = sizes[i] === 256 ? 0 : sizes[i];
+                ico[entryOffset]     = dim;  // width
+                ico[entryOffset + 1] = dim;  // height
+                ico[entryOffset + 2] = 0;    // color palette
+                ico[entryOffset + 3] = 0;    // reserved
+                view.setUint16(entryOffset + 4, 1, true);  // color planes
+                view.setUint16(entryOffset + 6, 32, true); // bits per pixel
+                view.setUint32(entryOffset + 8, pngBuffers[i].length, true);  // data size
+                view.setUint32(entryOffset + 12, dataOffset, true);           // data offset
+
+                ico.set(pngBuffers[i], dataOffset);
+                dataOffset += pngBuffers[i].length;
+            }
+
+            return ico;
+        }
+
         // Export
         document.getElementById('export-all').addEventListener('click', async () => {
             const text = currentCase === 'upper' ? 'CK' : 'ck';
@@ -471,15 +520,21 @@
             ];
 
             const tempCanvas = document.createElement('canvas');
+            const icoBuffers = {};
 
             files.forEach(file => {
                 tempCanvas.width = file.size;
                 tempCanvas.height = file.size;
                 drawFavicon(tempCanvas, file.size, currentTheme, text);
-                const dataUrl = tempCanvas.toDataURL('image/png');
-                const base64 = dataUrl.split(',')[1];
-                zip.file(file.name, base64, { base64: true });
+                const pngBuffer = canvasToPngBuffer(tempCanvas);
+                zip.file(file.name, pngBuffer);
+                if (file.size === 32 || file.size === 16) {
+                    icoBuffers[file.size] = pngBuffer;
+                }
             });
+
+            // favicon.ico (32x32 + 16x16)
+            zip.file('favicon.ico', buildIco([icoBuffers[32], icoBuffers[16]]));
 
             // Manifest
             const colors = themeColors[currentTheme];
