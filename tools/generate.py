@@ -2,7 +2,6 @@
 """Generate Hugo content from publications.json + archive.yaml."""
 
 import logging
-import shutil
 from datetime import date
 from pathlib import Path
 
@@ -13,6 +12,7 @@ from models import (
     COURSE_TYPES,
     RESEARCH_TYPES,
     ArchiveConfig,
+    Contacts,
     Course,
     Publication,
     PublicationsData,
@@ -432,17 +432,106 @@ def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     log.info("Generated about/_index.md")
 
 
+def format_contacts(contacts: Contacts | None) -> list[str]:
+    """Format contacts as markdown links."""
+    if not contacts:
+        return []
+    lines: list[str] = []
+    urls = {
+        "github": "https://github.com/{}",
+        "scholar": "https://scholar.google.com/citations?user={}",
+        "linkedin": "https://linkedin.com/in/{}",
+        "twitter": "https://x.com/{}",
+    }
+    for field, template in urls.items():
+        value = getattr(contacts, field, None)
+        if value:
+            lines.append(f"- [{field.title()}]({template.format(value)})")
+    if contacts.email:
+        lines.append(f"- Email: {contacts.email}")
+    return lines
+
+
+def build_llms_txt(
+    publications: list[Publication],
+    courses: list[Course],
+    config: ArchiveConfig,
+    stats: dict,
+    base_url: str,
+) -> str:
+    """Build llms.txt content for LLM crawlers."""
+    bio = config.site.bio or ""
+
+    research = sorted(
+        [p for p in publications if not p.course and p.pub_type in RESEARCH_TYPES],
+        key=lambda p: p.date_sort_key,
+        reverse=True,
+    )
+
+    lines = [
+        f"# {config.site.author} — Archive",
+        "",
+        f"> {bio}",
+        f"> {stats['papers']} papers, {stats['courses']} courses, "
+        f"{stats['year_start']}–{stats['year_end']}.",
+        "",
+        "## Pages",
+        "",
+    ]
+    for section in config.sections:
+        url = base_url + section.path
+        lines.append(f"- [{section.label}]({url})")
+    lines.append(f"- [About]({base_url}/about/)")
+
+    lines += [
+        "",
+        "## Data",
+        "",
+        f"- [publications.json]({base_url}/data/publications.json): "
+        "Machine-readable catalog of all publications (JSON)",
+        f"- [RSS feed]({base_url}/index.xml)",
+        f"- [Sitemap]({base_url}/sitemap.xml)",
+        "",
+        "## Research papers",
+        "",
+    ]
+    for pub in research:
+        authors = ", ".join(str(a) for a in pub.authors if str(a))
+        url = pub.url or "#"
+        lines.append(f"- [{pub.title}]({url}): {authors} ({pub.year})")
+
+    lines += ["", "## Courses", ""]
+    for course in courses:
+        url = f"{base_url}/teaching/{course.slug}/"
+        lines.append(
+            f"- [{course.name}]({url}): "
+            f"{course.school}, {course.year}, {len(course.lectures)} lectures"
+        )
+
+    contact_lines = format_contacts(config.site.contacts)
+    if contact_lines:
+        lines += ["", "## Contacts", ""] + contact_lines
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+
+def read_base_url(site_dir: Path) -> str:
+    """Read baseURL from hugo.toml, stripping trailing slash."""
+    import tomllib
+
+    with (site_dir / "hugo.toml").open("rb") as f:
+        data = tomllib.load(f)
+    return data["baseURL"].rstrip("/")
+
+
 def generate_all(
     publications: list[Publication],
     config: ArchiveConfig,
     content_dir: Path,
-    clean: bool = False,
 ) -> None:
     """Generate all content files."""
-    if clean and content_dir.exists():
-        shutil.rmtree(content_dir)
-        log.info(f"Cleaned {content_dir}")
-
     content_dir.mkdir(parents=True, exist_ok=True)
 
     # Compute courses and stats
@@ -476,6 +565,15 @@ def generate_all(
     # Generate about page (not in nav)
     generate_about(content_dir, config)
 
+    # Generate llms.txt and ai.txt
+    site_dir = content_dir.parent
+    static_dir = site_dir / "static"
+    base_url = read_base_url(site_dir)
+    llms_content = build_llms_txt(publications, courses, config, stats, base_url)
+    for name in ("llms.txt", "ai.txt"):
+        (static_dir / name).write_text(llms_content)
+    log.info("Generated llms.txt, ai.txt")
+
 
 @click.command()
 @click.option(
@@ -499,16 +597,10 @@ def generate_all(
     default=None,
     help="Output content directory",
 )
-@click.option(
-    "--clean",
-    is_flag=True,
-    help="Remove existing content before generating",
-)
 def main(
     publications: str | None,
     config: str | None,
     output: str | None,
-    clean: bool,
 ) -> None:
     """Generate Hugo content from publications and config."""
     pub_path = Path(publications) if publications else get_static_data_dir() / "publications.json"
@@ -523,7 +615,7 @@ def main(
     log.info(f"Loaded config with {len(cfg.sections)} sections")
 
     # Generate
-    generate_all(data.publications, cfg, content_dir, clean=clean)
+    generate_all(data.publications, cfg, content_dir)
 
     log.info(f"Content generated in {content_dir}")
 
