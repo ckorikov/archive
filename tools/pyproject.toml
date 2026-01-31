@@ -9,6 +9,7 @@ dependencies = [
     "click",
     "pyyaml",
     "transliterate>=1.10.2",
+    "hugo>=0.153.0",
 ]
 
 [project.scripts]

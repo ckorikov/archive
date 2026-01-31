@@ -3,6 +3,7 @@ SITE_DIR := site
 TOOLS_DIR := tools
 CONTENT_DIR := $(SITE_DIR)/content
 DEPLOYMENT_DIR := docs
+UV_RUN := uv run --project $(TOOLS_DIR)
 
 PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
@@ -28,17 +29,17 @@ help:
 
 # Fetch from Zotero API
 fetch:
-	uv run --project $(TOOLS_DIR) --env-file .env $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
+	$(UV_RUN) --env-file .env $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
 
 # Validate data files
 validate: $(PUBLICATIONS)
-	uv run --project $(TOOLS_DIR) $(TOOLS_DIR)/validate.py \
+	$(UV_RUN) $(TOOLS_DIR)/validate.py \
 		--publications $(PUBLICATIONS) \
 		--config $(CONFIG)
 
 # Generate content
 generate: validate
-	uv run --project $(TOOLS_DIR) $(TOOLS_DIR)/generate.py \
+	$(UV_RUN) $(TOOLS_DIR)/generate.py \
 		--publications $(PUBLICATIONS) \
 		--config $(CONFIG) \
 		--output $(CONTENT_DIR)
@@ -50,14 +51,14 @@ $(CONTENT_STAMP): $(PUBLICATIONS) $(CONFIG)
 
 # Build to docs/ for GitHub Pages
 build: $(CONTENT_STAMP)
-	hugo --source $(SITE_DIR) --minify --destination $(CURDIR)/$(DEPLOYMENT_DIR)
+	$(UV_RUN) hugo --source $(SITE_DIR) --minify --destination $(CURDIR)/$(DEPLOYMENT_DIR)
 
 # Alias for build (production deploy)
 deploy: clean build
 
 # Dev server with drafts
 serve: $(CONTENT_STAMP)
-	hugo server --source $(SITE_DIR) --destination $(CURDIR)/$(DEPLOYMENT_DIR) -D
+	$(UV_RUN) hugo server --source $(SITE_DIR) --destination $(CURDIR)/$(DEPLOYMENT_DIR) -D
 
 # Clean generated files (keeps publications.json)
 clean:
@@ -66,8 +67,8 @@ clean:
 
 # Check and fix Python code
 check:
-	uv run --project $(TOOLS_DIR) ruff check --fix $(TOOLS_DIR)
+	$(UV_RUN) ruff check --fix $(TOOLS_DIR)
 
 # Format Python code
 format:
-	uv run --project $(TOOLS_DIR) ruff format $(TOOLS_DIR)
+	$(UV_RUN) ruff format $(TOOLS_DIR)
