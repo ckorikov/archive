@@ -11,6 +11,48 @@
 {{- with .manifest }}<link rel="manifest" href="{{ . }}">{{ end }}
 {{- end -}}
 
+{{/* Verification */}}
+{{- with site.Params.verification -}}
+{{- with .yandex }}<meta name="yandex-verification" content="{{ . }}">{{ end }}
+{{- with .google }}<meta name="google-site-verification" content="{{ . }}">{{ end }}
+{{- end -}}
+
+{{/* Description */}}
+{{- $description := site.Params.description -}}
+{{- with .Description }}{{ $description = . }}{{ end -}}
+{{- with .Params.description }}{{ $description = . }}{{ end -}}
+{{- with $description }}
+<meta name="description" content="{{ . }}">
+{{- end }}
+{{- with site.Params.keywords }}
+<meta name="keywords" content="{{ . }}">
+{{- end }}
+{{- with site.Params.author }}
+<meta name="author" content="{{ . }}">
+{{- end }}
+
+{{/* Open Graph */}}
+<meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+{{- with $description }}
+<meta property="og:description" content="{{ . }}">
+{{- end }}
+{{- with site.Params.og_image }}
+<meta property="og:image" content="{{ .src | absURL }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+{{- end }}
+
+{{/* RSS */}}
+{{- with .OutputFormats.Get "rss" }}
+<link rel="alternate" type="application/rss+xml" title="{{ site.Title }}" href="{{ .Permalink }}">
+{{- end }}
+
+{{/* Canonical */}}
+<link rel="canonical" href="{{ .Permalink }}">
+
 {{/* Google Fonts */}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -8,6 +8,14 @@ enableRobotsTxt = true
 [params]
   author = "Constantine Korikov"
   header_label = "Archive"
+  description = "Scientific publications and teaching materials by Constantine Korikov"
+  keywords = "Constantine, Korikov, archive, publications, teaching"
+
+[params.verification]
+  yandex = "0a551e133431e226"
+
+[params.og_image]
+  src = "/opengraph.png"
 
 [params.favicon]
   ico = "/favicon.ico"
