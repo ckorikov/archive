@@ -3,6 +3,7 @@ languageCode = 'en-us'
 title = 'Archive'
 theme = 'book-toc-ck'
 disableKinds = ["taxonomy", "term"]
+enableRobotsTxt = true
 
 [params]
   author = "Constantine Korikov"
