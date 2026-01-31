@@ -2,6 +2,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s — %s" .Title site.Title }}{{ end }}</title>
 
+{{/* Favicon */}}
+{{- with site.Params.favicon -}}
+{{- with .png32 }}<link rel="icon" type="image/png" sizes="32x32" href="{{ . }}">{{ end }}
+{{- with .png16 }}<link rel="icon" type="image/png" sizes="16x16" href="{{ . }}">{{ end }}
+{{- with .apple_touch_icon }}<link rel="apple-touch-icon" sizes="180x180" href="{{ . }}">{{ end }}
+{{- with .manifest }}<link rel="manifest" href="{{ . }}">{{ end }}
+{{- end -}}
+
 {{/* Google Fonts */}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
