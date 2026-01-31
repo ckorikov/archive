@@ -17,6 +17,9 @@ enableRobotsTxt = true
 [params.og_image]
   src = "/img/opengraph.png"
 
+[params.analytics]
+  yandex_metrika = 54620479
+
 [params.favicon]
   ico = "/favicon.ico"
   png32 = "/favicon-32x32.png"
