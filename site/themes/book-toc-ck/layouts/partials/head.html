@@ -4,6 +4,7 @@
 
 {{/* Favicon */}}
 {{- with site.Params.favicon -}}
+{{- with .ico }}<link rel="icon" href="{{ . }}" sizes="any">{{ end }}
 {{- with .png32 }}<link rel="icon" type="image/png" sizes="32x32" href="{{ . }}">{{ end }}
 {{- with .png16 }}<link rel="icon" type="image/png" sizes="16x16" href="{{ . }}">{{ end }}
 {{- with .apple_touch_icon }}<link rel="apple-touch-icon" sizes="180x180" href="{{ . }}">{{ end }}

@@ -9,6 +9,7 @@ disableKinds = ["taxonomy", "term"]
   header_label = "Archive"
 
 [params.favicon]
+  ico = "/favicon.ico"
   png32 = "/favicon-32x32.png"
   png16 = "/favicon-16x16.png"
   apple_touch_icon = "/apple-touch-icon.png"
