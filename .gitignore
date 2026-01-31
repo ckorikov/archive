@@ -28,7 +28,6 @@ MANIFEST
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
 *.spec
 
 # Installer logs
@@ -110,9 +109,14 @@ venv.bak/
 #Microsoft
 .vscode
 
-# Hugo
-*.lock
 # Favicon source files
 favicon-ck*/
-site/public/
+
+# Hugo (generated)
 site/content/
+site/static/data/publications.json
+site/static/ai.txt
+site/static/llms.txt
+
+# Build output (CI deploys)
+docs/
