@@ -174,10 +174,11 @@ def compute_courses(
 def compute_stats(publications: list[Publication], courses: list[Course]) -> dict:
     """Compute statistics for margin display."""
     years = [p.year for p in publications]
-    papers = sum(1 for p in publications if p.pub_type in RESEARCH_TYPES)
+    research_pubs = [p for p in publications if p.pub_type in RESEARCH_TYPES]
+    paper_num = len(research_pubs)
 
     return {
-        "papers": papers,
+        "papers": paper_num,
         "courses": len(courses),
         "year_start": min(years) if years else 0,
         "year_end": max(years) if years else 0,
