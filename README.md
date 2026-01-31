@@ -1,7 +1,5 @@
 # Archive
 
-## Setup
-
 Create `.env` in the project root with your Zotero credentials:
 
 ```
