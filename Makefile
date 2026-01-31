@@ -29,7 +29,7 @@ help:
 
 # Fetch from Zotero API
 fetch:
-	$(UV_RUN) --env-file .env $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
+	$(UV_RUN) $(if $(wildcard .env),--env-file .env) $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
 
 # Validate data files
 validate: $(PUBLICATIONS)
