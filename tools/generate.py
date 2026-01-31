@@ -24,11 +24,13 @@ from models import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
+DEFAULT_DATE = date(1990, 3, 25)
+
 
 def latest_pub_date(publications: list[Publication]) -> date:
     """Return date of the most recent publication."""
     if not publications:
-        return date(1990, 3, 25)
+        return DEFAULT_DATE
     return max(p.pub_date for p in publications)
 
 
