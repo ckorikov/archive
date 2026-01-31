@@ -15,7 +15,7 @@ enableRobotsTxt = true
   yandex = "0a551e133431e226"
 
 [params.og_image]
-  src = "/opengraph.png"
+  src = "/img/opengraph.png"
 
 [params.favicon]
   ico = "/favicon.ico"
