@@ -119,6 +119,8 @@ class Course(BaseModel):
         lectures: list[Publication],
     ) -> Course:
         """Create course from list of lectures."""
+        if not lectures:
+            raise ValueError("from_lectures() requires at least one lecture")
         # Sort by date, then by title for stable ordering
         sorted_lectures = sorted(lectures, key=lambda p: (*p.date_sort_key, p.title))
         year = min(lec.year for lec in sorted_lectures)
