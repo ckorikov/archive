@@ -74,17 +74,11 @@ def main(publications: str | None, config: str | None) -> None:
     pub_path = Path(publications) if publications else get_static_data_dir() / "publications.json"
     config_path = Path(config) if config else get_archive_config_path()
 
-    errors = 0
-
     data = validate_publications(pub_path)
-    if data is None:
-        errors += 1
-
     cfg = validate_config(config_path)
-    if cfg is None:
-        errors += 1
 
-    if errors:
+    if data is None or cfg is None:
+        log.error("Validation failed, see errors above")
         sys.exit(1)
 
     print_stats(data)
