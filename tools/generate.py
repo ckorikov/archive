@@ -3,6 +3,7 @@
 
 import logging
 import shutil
+from datetime import date
 from pathlib import Path
 
 import click
@@ -22,6 +23,13 @@ from models import (
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
+
+
+def latest_pub_date(publications: list[Publication]) -> date:
+    """Return date of the most recent publication."""
+    if not publications:
+        return date(1990, 3, 25)
+    return max(p.pub_date for p in publications)
 
 
 def pub_to_item(pub: Publication, config: ArchiveConfig) -> dict:
@@ -286,6 +294,7 @@ def generate_index(
     data = {
         "title": "Publications",
         "layout": "index",
+        "date": latest_pub_date(publications),
         "stats": stats,
         "nav": nav_items,
         "groups": groups_data,
@@ -311,6 +320,7 @@ def generate_section(
     data = {
         "title": label,
         "type": "publications",
+        "date": latest_pub_date(publications),
         "publications_count": len(publications),
         "items": group_pubs_by_year(publications, config),
     }
@@ -344,6 +354,7 @@ def generate_course_page(
         "title": config.normalize(course.name),
         "type": "course",
         "layout": "course/single",
+        "date": latest_pub_date(course.lectures),
         "slug": course.slug,
         "school": course.school,
         "year": course.year,
@@ -378,9 +389,11 @@ def generate_teaching(
         })
 
     # Teaching index
+    all_lectures = [lec for c in courses for lec in c.lectures]
     data = {
         "title": "Teaching",
         "layout": "teaching/list",
+        "date": latest_pub_date(all_lectures),
         "courses_count": len(courses),
         "schools": schools_data,
     }

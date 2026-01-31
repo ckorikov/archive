@@ -1,5 +1,6 @@
 """Pydantic models and utilities for archive-tools."""
 
+from datetime import date
 from enum import Enum
 from pathlib import Path
 
@@ -99,6 +100,11 @@ class Publication(BaseModel):
     def date_sort_key(self) -> tuple[int, int, int]:
         """Sort key for chronological ordering."""
         return (self.year, self.month or 0, self.day or 0)
+
+    @property
+    def pub_date(self) -> date:
+        """Publication date, defaulting missing month/day to 1."""
+        return date(self.year, self.month or 1, self.day or 1)
 
 
 class Course(BaseModel):
