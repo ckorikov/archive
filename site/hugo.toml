@@ -1,0 +1,25 @@
+baseURL = 'https://korikov.cc/'
+languageCode = 'en-us'
+title = 'Archive'
+theme = 'book-toc-ck'
+disableKinds = ["taxonomy", "term"]
+enableRobotsTxt = true
+
+[params]
+  author = "Constantine Korikov"
+  header_label = "Archive"
+  description = "Scientific publications and teaching materials by Constantine Korikov"
+  keywords = "Constantine, Korikov, archive, publications, teaching"
+
+[params.verification]
+  yandex = "0a551e133431e226"
+
+[params.og_image]
+  src = "/img/opengraph.png"
+
+[params.favicon]
+  ico = "/favicon.ico"
+  png32 = "/favicon-32x32.png"
+  png16 = "/favicon-16x16.png"
+  apple_touch_icon = "/apple-touch-icon.png"
+  manifest = "/site.webmanifest"

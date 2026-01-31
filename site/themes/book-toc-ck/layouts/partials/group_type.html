@@ -1,0 +1,28 @@
+<section class="group_type">
+  <h2 class="group_type__title">{{ .title }}</h2>
+  {{- if .items }}
+    {{- range .items }}
+      {{- partial "group_year.html" . -}}
+    {{- end -}}
+  {{- else if .pages }}
+    {{- range .pages }}
+      {{- $meta := .Params.school -}}
+      {{- $lectureCount := len (.Params.lectures | default slice) -}}
+      {{- if $lectureCount }}
+        {{- $meta = printf "%s, %d lectures" $meta $lectureCount -}}
+      {{- end -}}
+      <div class="group_year">
+        <div class="group_year__title">{{ .Params.year }}</div>
+        <div class="items">
+          {{- partial "item.html" (dict
+            "title" .Title
+            "url" (.Params.url | default .RelPermalink)
+            "pdf" .Params.pdf
+            "tags" .Params.tags
+            "meta" $meta
+          ) -}}
+        </div>
+      </div>
+    {{- end -}}
+  {{- end -}}
+</section>

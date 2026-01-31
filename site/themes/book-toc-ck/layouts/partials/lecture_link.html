@@ -1,0 +1,6 @@
+{{- $l := . -}}
+<div class="lecture">
+  {{- with $l.num }}<span class="lecture__num">{{ . }}</span>{{ end -}}
+  <a href="{{ $l.url | default "#" }}" class="lecture__title">{{ $l.title }}</a>
+  {{- with $l.pdf }}<a href="{{ . }}" class="lecture__pdf">pdf</a>{{ end -}}
+</div>

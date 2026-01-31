@@ -1,0 +1,7 @@
+{{ define "main" }}
+  {{- .Content -}}
+
+  {{- range .Params.groups }}
+    {{- partial "group_type.html" (dict "title" .name "items" .items) -}}
+  {{- end -}}
+{{ end }}

@@ -28,7 +28,6 @@ MANIFEST
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
 *.spec
 
 # Installer logs
@@ -97,11 +96,11 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
+
+# ruff
+.ruff_cache/
 
 #JetBrains
 .idea/
@@ -109,3 +108,16 @@ venv.bak/
 
 #Microsoft
 .vscode
+
+# Favicon source files
+favicon-ck*/
+
+# Hugo (generated)
+site/.hugo_build.lock
+site/content/
+site/static/data/publications.json
+site/static/ai.txt
+site/static/llms.txt
+
+# Build output (CI deploys)
+docs/

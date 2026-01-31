@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CK Favicon Pack — Constantine Korikov</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-paper: #fcfcfa;
+            --c-ink: #1a1917;
+            --c-ink-medium: #5c5955;
+            --c-ink-light: #9a9590;
+            --c-ink-faint: #c5c2bc;
+            --c-accent: #6b1c00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--c-paper);
+            font-family: 'Cormorant', Georgia, serif;
+            padding: 3rem 2rem;
+        }
+
+        h1 {
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--c-ink-faint);
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 0.65rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--c-ink-light);
+            margin: 3rem 0 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--c-ink-faint);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .control-label {
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--c-ink-light);
+            margin-right: 0.5rem;
+        }
+
+        .btn {
+            font-family: 'Cormorant', Georgia, serif;
+            font-size: 0.9rem;
+            font-style: italic;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--c-ink-faint);
+            background: transparent;
+            color: var(--c-ink-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            border-color: var(--c-ink-light);
+            color: var(--c-ink-medium);
+        }
+
+        .btn.is-active {
+            border-color: var(--c-ink);
+            color: var(--c-ink);
+        }
+
+        /* Theme selector */
+        .theme-selector {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .theme-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-option.is-active .theme-label {
+            color: var(--c-ink);
+        }
+
+        .theme-option canvas {
+            border: 1px solid var(--c-ink-faint);
+        }
+
+        .theme-option.is-active canvas {
+            border-color: var(--c-ink);
+        }
+
+        .theme-label {
+            font-size: 0.65rem;
+            font-style: italic;
+            color: var(--c-ink-light);
+            transition: color 0.2s ease;
+        }
+
+        /* Main preview */
+        .main-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-preview canvas {
+            border: 1px solid var(--c-ink-faint);
+        }
+
+        .size-label {
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--c-ink-light);
+        }
+
+        /* File grid */
+        .file-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem 1.5rem;
+            border: 1px solid var(--c-ink-faint);
+            background: white;
+            min-width: 140px;
+        }
+
+        .file-item .canvas-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 64px;
+        }
+
+        .file-name {
+            font-size: 0.6rem;
+            font-family: 'Courier New', monospace;
+            color: var(--c-ink-medium);
+            text-align: center;
+        }
+
+        .file-size {
+            font-size: 0.55rem;
+            font-style: italic;
+            color: var(--c-ink-light);
+        }
+
+        /* Webmanifest preview */
+        .manifest-preview {
+            max-width: 560px;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .manifest-code {
+            background: var(--c-ink);
+            color: #e6e6e6;
+            padding: 1.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            line-height: 1.7;
+            overflow-x: auto;
+        }
+
+        .manifest-code .key { color: #79c0ff; }
+        .manifest-code .string { color: #a5d6ff; }
+
+        /* Export button */
+        .export-section {
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .export-btn {
+            font-family: 'Cormorant', Georgia, serif;
+            font-size: 1rem;
+            font-style: italic;
+            padding: 0.75rem 2rem;
+            border: 1px solid var(--c-ink);
+            background: var(--c-ink);
+            color: var(--c-paper);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .export-btn:hover {
+            background: transparent;
+            color: var(--c-ink);
+        }
+
+        .export-note {
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--c-ink-light);
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Favicon Pack</h1>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="control-group">
+            <span class="control-label">Регистр:</span>
+            <button class="btn is-active" data-case="upper">CK</button>
+            <button class="btn" data-case="lower">ck</button>
+        </div>
+    </div>
+
+    <!-- Theme selector -->
+    <div class="theme-selector">
+        <div class="theme-option is-active" data-theme="light">
+            <canvas width="64" height="64" id="theme-light"></canvas>
+            <span class="theme-label">Светлый</span>
+        </div>
+        <div class="theme-option" data-theme="dark">
+            <canvas width="64" height="64" id="theme-dark"></canvas>
+            <span class="theme-label">Тёмный</span>
+        </div>
+        <div class="theme-option" data-theme="accent">
+            <canvas width="64" height="64" id="theme-accent"></canvas>
+            <span class="theme-label">Акцент</span>
+        </div>
+        <div class="theme-option" data-theme="minimal">
+            <canvas width="64" height="64" id="theme-minimal"></canvas>
+            <span class="theme-label">Минимал</span>
+        </div>
+        <div class="theme-option" data-theme="framed">
+            <canvas width="64" height="64" id="theme-framed"></canvas>
+            <span class="theme-label">Рамка</span>
+        </div>
+    </div>
+
+    <!-- Main 512 preview -->
+    <div class="main-preview">
+        <canvas width="512" height="512" id="main-512"></canvas>
+        <span class="size-label">android-chrome-512x512.png</span>
+    </div>
+
+    <h2>Все файлы</h2>
+
+    <!-- File grid -->
+    <div class="file-grid">
+        <div class="file-item">
+            <div class="canvas-wrapper">
+                <canvas width="192" height="192" id="file-192"></canvas>
+            </div>
+            <span class="file-name">android-chrome-192x192.png</span>
+            <span class="file-size">192 × 192</span>
+        </div>
+
+        <div class="file-item">
+            <div class="canvas-wrapper">
+                <canvas width="180" height="180" id="file-180"></canvas>
+            </div>
+            <span class="file-name">apple-touch-icon.png</span>
+            <span class="file-size">180 × 180</span>
+        </div>
+
+        <div class="file-item">
+            <div class="canvas-wrapper">
+                <canvas width="32" height="32" id="file-32"></canvas>
+            </div>
+            <span class="file-name">favicon-32x32.png</span>
+            <span class="file-size">32 × 32</span>
+        </div>
+
+        <div class="file-item">
+            <div class="canvas-wrapper">
+                <canvas width="16" height="16" id="file-16"></canvas>
+            </div>
+            <span class="file-name">favicon-16x16.png</span>
+            <span class="file-size">16 × 16</span>
+        </div>
+
+        <div class="file-item">
+            <div class="canvas-wrapper">
+                <canvas width="32" height="32" id="file-ico"></canvas>
+            </div>
+            <span class="file-name">favicon.ico</span>
+            <span class="file-size">32 × 32</span>
+        </div>
+    </div>
+
+    <h2>site.webmanifest</h2>
+
+    <div class="manifest-preview">
+        <pre class="manifest-code" id="manifest-code"></pre>
+    </div>
+
+    <div class="export-section">
+        <button class="export-btn" id="export-all">Скачать всё</button>
+        <p class="export-note">ZIP-архив: PNG, favicon.ico, site.webmanifest</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const themeColors = {
+            light:   { bg: '#fcfcfa', fg: '#1a1917', border: '#c5c2bc', borderWidth: 1 },
+            dark:    { bg: '#1a1917', fg: '#fcfcfa', border: null },
+            accent:  { bg: '#fcfcfa', fg: '#6b1c00', border: '#c5c2bc', borderWidth: 1 },
+            minimal: { bg: '#fcfcfa', fg: '#1a1917', border: null },
+            framed:  { bg: '#fcfcfa', fg: '#1a1917', border: '#1a1917', borderWidth: 2 }
+        };
+
+        let currentTheme = 'light';
+        let currentCase = 'upper';
+
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const caseBtns = document.querySelectorAll('[data-case]');
+
+        // Draw favicon on canvas
+        function drawFavicon(canvas, size, theme, text) {
+            const ctx = canvas.getContext('2d');
+            const colors = themeColors[theme];
+
+            ctx.clearRect(0, 0, size, size);
+
+            // Background
+            ctx.fillStyle = colors.bg;
+            ctx.fillRect(0, 0, size, size);
+
+            // Border
+            if (colors.border) {
+                const bw = Math.max(1, Math.round(colors.borderWidth * size / 512));
+                ctx.strokeStyle = colors.border;
+                ctx.lineWidth = bw;
+                ctx.strokeRect(bw / 2, bw / 2, size - bw, size - bw);
+            }
+
+            // Text
+            const fontSize = Math.round(size * 0.43);
+            ctx.fillStyle = colors.fg;
+            ctx.font = `italic 500 ${fontSize}px Cormorant, Georgia, serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, size / 2, size / 2 + fontSize * 0.05);
+        }
+
+        // Render all previews
+        function renderAll() {
+            const text = currentCase === 'upper' ? 'CK' : 'ck';
+
+            // Theme selector thumbnails
+            Object.keys(themeColors).forEach(theme => {
+                const canvas = document.getElementById(`theme-${theme}`);
+                drawFavicon(canvas, 64, theme, text);
+            });
+
+            // Main preview
+            drawFavicon(document.getElementById('main-512'), 512, currentTheme, text);
+
+            // File previews (real sizes)
+            drawFavicon(document.getElementById('file-192'), 192, currentTheme, text);
+            drawFavicon(document.getElementById('file-180'), 180, currentTheme, text);
+            drawFavicon(document.getElementById('file-32'), 32, currentTheme, text);
+            drawFavicon(document.getElementById('file-16'), 16, currentTheme, text);
+            drawFavicon(document.getElementById('file-ico'), 32, currentTheme, text);
+
+            updateManifest();
+        }
+
+        // Update manifest preview
+        function updateManifest() {
+            const colors = themeColors[currentTheme];
+            const manifest = `{
+  <span class="key">"name"</span>: <span class="string">"Constantine Korikov"</span>,
+  <span class="key">"short_name"</span>: <span class="string">"CK"</span>,
+  <span class="key">"icons"</span>: [
+    {
+      <span class="key">"src"</span>: <span class="string">"/android-chrome-192x192.png"</span>,
+      <span class="key">"sizes"</span>: <span class="string">"192x192"</span>,
+      <span class="key">"type"</span>: <span class="string">"image/png"</span>
+    },
+    {
+      <span class="key">"src"</span>: <span class="string">"/android-chrome-512x512.png"</span>,
+      <span class="key">"sizes"</span>: <span class="string">"512x512"</span>,
+      <span class="key">"type"</span>: <span class="string">"image/png"</span>
+    }
+  ],
+  <span class="key">"theme_color"</span>: <span class="string">"${colors.bg}"</span>,
+  <span class="key">"background_color"</span>: <span class="string">"${colors.bg}"</span>,
+  <span class="key">"display"</span>: <span class="string">"standalone"</span>
+}`;
+            document.getElementById('manifest-code').innerHTML = manifest;
+        }
+
+        // Theme switching
+        themeOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                currentTheme = opt.dataset.theme;
+                themeOptions.forEach(o => o.classList.toggle('is-active', o === opt));
+                renderAll();
+            });
+        });
+
+        // Case switching
+        caseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentCase = btn.dataset.case;
+                caseBtns.forEach(b => b.classList.toggle('is-active', b === btn));
+                renderAll();
+            });
+        });
+
+        // Canvas to PNG ArrayBuffer
+        function canvasToPngBuffer(canvas) {
+            const dataUrl = canvas.toDataURL('image/png');
+            const binary = atob(dataUrl.split(',')[1]);
+            const buffer = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                buffer[i] = binary.charCodeAt(i);
+            }
+            return buffer;
+        }
+
+        // Build ICO from PNG buffers (ICO with embedded PNGs)
+        function buildIco(pngBuffers) {
+            const count = pngBuffers.length;
+            const headerSize = 6;
+            const dirEntrySize = 16;
+            const dirSize = dirEntrySize * count;
+            let dataOffset = headerSize + dirSize;
+
+            const sizes = [32, 16];
+            const totalSize = dataOffset + pngBuffers.reduce((s, b) => s + b.length, 0);
+            const ico = new Uint8Array(totalSize);
+            const view = new DataView(ico.buffer);
+
+            // Header
+            view.setUint16(0, 0, true);     // reserved
+            view.setUint16(2, 1, true);     // type: icon
+            view.setUint16(4, count, true); // image count
+
+            // Directory entries + data
+            for (let i = 0; i < count; i++) {
+                const entryOffset = headerSize + i * dirEntrySize;
+                const dim = sizes[i] === 256 ? 0 : sizes[i];
+                ico[entryOffset]     = dim;  // width
+                ico[entryOffset + 1] = dim;  // height
+                ico[entryOffset + 2] = 0;    // color palette
+                ico[entryOffset + 3] = 0;    // reserved
+                view.setUint16(entryOffset + 4, 1, true);  // color planes
+                view.setUint16(entryOffset + 6, 32, true); // bits per pixel
+                view.setUint32(entryOffset + 8, pngBuffers[i].length, true);  // data size
+                view.setUint32(entryOffset + 12, dataOffset, true);           // data offset
+
+                ico.set(pngBuffers[i], dataOffset);
+                dataOffset += pngBuffers[i].length;
+            }
+
+            return ico;
+        }
+
+        // Export
+        document.getElementById('export-all').addEventListener('click', async () => {
+            const text = currentCase === 'upper' ? 'CK' : 'ck';
+            const zip = new JSZip();
+
+            const files = [
+                { name: 'android-chrome-512x512.png', size: 512 },
+                { name: 'android-chrome-192x192.png', size: 192 },
+                { name: 'apple-touch-icon.png', size: 180 },
+                { name: 'favicon-32x32.png', size: 32 },
+                { name: 'favicon-16x16.png', size: 16 }
+            ];
+
+            const tempCanvas = document.createElement('canvas');
+            const icoBuffers = {};
+
+            files.forEach(file => {
+                tempCanvas.width = file.size;
+                tempCanvas.height = file.size;
+                drawFavicon(tempCanvas, file.size, currentTheme, text);
+                const pngBuffer = canvasToPngBuffer(tempCanvas);
+                zip.file(file.name, pngBuffer);
+                if (file.size === 32 || file.size === 16) {
+                    icoBuffers[file.size] = pngBuffer;
+                }
+            });
+
+            // favicon.ico (32x32 + 16x16)
+            zip.file('favicon.ico', buildIco([icoBuffers[32], icoBuffers[16]]));
+
+            // Manifest
+            const colors = themeColors[currentTheme];
+            const manifest = {
+                name: "Constantine Korikov",
+                short_name: text,
+                icons: [
+                    { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+                    { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
+                ],
+                theme_color: colors.bg,
+                background_color: colors.bg,
+                display: "standalone"
+            };
+            zip.file('site.webmanifest', JSON.stringify(manifest, null, 2));
+
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `favicon-ck-${currentTheme}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Initial render after font loads
+        document.fonts.ready.then(() => renderAll());
+    </script>
+</body>
+</html>

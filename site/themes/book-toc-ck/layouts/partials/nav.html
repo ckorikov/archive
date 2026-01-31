@@ -1,0 +1,11 @@
+{{- range (site.GetPage "/").Params.nav -}}
+  {{- $isActive := false -}}
+  {{- if eq .path "/" -}}
+    {{- $isActive = eq $.RelPermalink "/" -}}
+  {{- else -}}
+    {{- $isActive = hasPrefix $.RelPermalink .path -}}
+  {{- end -}}
+  <a href="{{ .path }}" class="nav__item{{ if $isActive }} is-active{{ end }}">
+    {{- .label -}}
+  </a>
+{{- end -}}
