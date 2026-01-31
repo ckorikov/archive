@@ -54,12 +54,13 @@ def print_stats(data: PublicationsData) -> None:
     """Print publication statistics."""
     pubs = data.publications
     years = [p.year for p in pubs]
-    papers = sum(1 for p in pubs if p.pub_type in RESEARCH_TYPES)
+    research_pubs = [p for p in pubs if p.pub_type in RESEARCH_TYPES]
+    paper_num = len(research_pubs)
     # Count courses by unique (course, school) pairs
     courses = {(p.course, p.school or "") for p in pubs if p.course}
 
     print("\n--- Statistics ---")
-    print(f"papers: {papers}")
+    print(f"papers: {paper_num}")
     print(f"courses: {len(courses)}")
     print(f"year_start: {min(years)}")
     print(f"year_end: {max(years)}")
