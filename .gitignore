@@ -112,5 +112,7 @@ venv.bak/
 
 # Hugo
 *.lock
+# Favicon source files
+favicon-ck*/
 site/public/
 site/content/
