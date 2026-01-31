@@ -28,7 +28,7 @@ help:
 
 # Fetch from Zotero API
 fetch:
-	uv run --project $(TOOLS_DIR) $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
+	uv run --project $(TOOLS_DIR) --env-file .env $(TOOLS_DIR)/fetch.py --output $(PUBLICATIONS)
 
 # Validate data files
 validate: $(PUBLICATIONS)

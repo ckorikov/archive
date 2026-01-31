@@ -31,9 +31,16 @@ class ZoteroFetcherConfig:
 
     @classmethod
     def from_env(cls) -> ZoteroFetcherConfig:
+        api_key = os.environ.get("ZOTERO_API_KEY")
+        library_id = os.environ.get("ZOTERO_LIBRARY_ID")
+        if not api_key or not library_id:
+            raise SystemExit(
+                "Missing ZOTERO_API_KEY or ZOTERO_LIBRARY_ID.\n"
+                "Set credentials in .env (see README)."
+            )
         return cls(
-            api_key=os.environ.get("ZOTERO_API_KEY", "hTvqMYvC4Bjhm4xGHqyCTSWv"),
-            library_id=int(os.environ.get("ZOTERO_LIBRARY_ID", "4809962")),
+            api_key=api_key,
+            library_id=int(library_id),
             library_type=os.environ.get("ZOTERO_LIBRARY_TYPE", "user"),
         )
 
