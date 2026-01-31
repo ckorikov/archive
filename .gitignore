@@ -113,6 +113,7 @@ venv.bak/
 favicon-ck*/
 
 # Hugo (generated)
+site/.hugo_build.lock
 site/content/
 site/static/data/publications.json
 site/static/ai.txt
