@@ -27,11 +27,6 @@ jobs:
           enable-cache: true
           cache-dependency-glob: tools/uv.lock
 
-      - uses: gohugoio/setup-hugo@v0.5.0
-        with:
-          hugo-version: '0.154.5'
-          extended: true
-
       - name: Build
         env:
           ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
