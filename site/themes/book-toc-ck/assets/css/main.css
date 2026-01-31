@@ -1,0 +1,532 @@
+/* ==========================================================================
+   book-toc-ck theme
+   Book-style typography for academic archives
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Variables
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --c-paper: #fcfcfa;
+  --c-ink: #1a1917;
+  --c-ink-medium: #5c5955;
+  --c-ink-light: #9a9590;
+  --c-ink-faint: #c5c2bc;
+  --c-accent: #6b1c00;
+  --c-pdf: #2d6a4f;
+
+  /* Typography */
+  --font-main: "Cormorant", "Garamond", "Times New Roman", serif;
+
+  /* Font sizes */
+  --text-xs: 0.7rem;
+  --text-sm: 0.9rem;
+  --text-base: 1.05rem;
+  --text-lg: 1.15rem;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+}
+
+/* ==========================================================================
+   2. Reset & Base
+   ========================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  font-family: var(--font-main);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  color: var(--c-ink);
+  background: var(--c-paper);
+  min-height: 100vh;
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   3. Layout
+   ========================================================================== */
+
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Right margin stats */
+.margin-stats {
+  position: fixed;
+  top: 20%;
+  right: 20px;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--c-ink-faint);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* ==========================================================================
+   4. Header
+   ========================================================================== */
+
+.header {
+  margin-bottom: var(--space-xl);
+}
+
+.header__label {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  margin-bottom: var(--space-md);
+}
+
+.header__name {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.header__name a:hover {
+  color: var(--c-accent);
+}
+
+/* ==========================================================================
+   5. Navigation
+   ========================================================================== */
+
+.nav {
+  margin-bottom: var(--space-xl);
+}
+
+.nav__item {
+  display: block;
+  width: fit-content;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--c-ink-light);
+  padding: var(--space-xs) 0;
+  transition: color 0.15s ease;
+}
+
+.nav__item:hover {
+  color: var(--c-ink);
+}
+
+.nav__item.is-active {
+  color: var(--c-ink);
+  font-style: italic;
+}
+
+/* ==========================================================================
+   6. Page Title (for section pages)
+   ========================================================================== */
+
+.page-title {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--c-ink-light);
+  display: inline-block;
+}
+
+/* ==========================================================================
+   7. Single Page Elements
+   ========================================================================== */
+
+.page-date {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-light);
+  margin-bottom: var(--space-lg);
+}
+
+.page-tags {
+  margin-top: var(--space-lg);
+  font-size: var(--text-sm);
+  color: var(--c-ink-medium);
+}
+
+.page-tags a {
+  color: var(--c-ink-medium);
+  transition: color 0.15s ease;
+}
+
+.page-tags a:hover {
+  color: var(--c-accent);
+}
+
+.error-404 {
+  font-size: 4rem;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--c-ink-light);
+}
+
+/* ==========================================================================
+   8. Group Type (main page grouping)
+   ========================================================================== */
+
+.group_type {
+  margin-bottom: var(--space-2xl);
+}
+
+.group_type__title {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--c-ink-light);
+  display: inline-block;
+}
+
+/* ==========================================================================
+   9. Group Year
+   ========================================================================== */
+
+.group_year {
+  margin-bottom: var(--space-lg);
+}
+
+.group_year:last-child {
+  margin-bottom: 0;
+}
+
+.group_year__title {
+  font-size: var(--text-base);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-sm);
+}
+
+/* ==========================================================================
+   10. Items (publication list)
+   ========================================================================== */
+
+.items {
+  padding-left: var(--space-lg);
+}
+
+.item {
+  padding: var(--space-xs) 0;
+}
+
+.item__title {
+  font-weight: 400;
+  transition: color 0.15s ease;
+}
+
+.item__title:hover {
+  color: var(--c-accent);
+}
+
+.item__authors,
+.item__tags,
+.item__sep,
+.item__meta {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-light);
+}
+
+.item__pdf,
+.lecture__pdf {
+  font-size: var(--text-xs);
+  font-style: normal;
+  color: var(--c-pdf);
+  margin-left: var(--space-sm);
+  transition: color 0.15s ease;
+}
+
+.item__pdf:hover,
+.lecture__pdf:hover {
+  color: var(--c-accent);
+}
+
+/* ==========================================================================
+   11. School Group (teaching list)
+   ========================================================================== */
+
+.school {
+  margin-bottom: var(--space-2xl);
+}
+
+.school__title {
+  font-size: var(--text-base);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-lg);
+}
+
+/* ==========================================================================
+   12. Course Card (teaching list)
+   ========================================================================== */
+
+.course {
+  margin-bottom: var(--space-xl);
+  padding-left: var(--space-lg);
+}
+
+.course:last-child {
+  margin-bottom: 0;
+}
+
+.course__header {
+  margin-bottom: var(--space-sm);
+}
+
+.course__title {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  display: inline;
+}
+
+.course__title a:hover {
+  color: var(--c-accent);
+}
+
+.course__year {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-light);
+  margin-left: var(--space-sm);
+}
+
+.course__description {
+  font-size: var(--text-sm);
+  color: var(--c-ink-medium);
+  line-height: 1.5;
+  margin-bottom: var(--space-sm);
+  max-width: 45ch;
+}
+
+.course__meta {
+  font-size: var(--text-xs);
+  color: var(--c-ink-light);
+  letter-spacing: 0.05em;
+}
+
+.course__tag {
+  display: inline;
+}
+
+.course__tag + .course__tag::before {
+  content: ", ";
+}
+
+/* Lectures preview in course card */
+.course__lectures {
+  margin-top: var(--space-md);
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--c-ink-faint);
+}
+
+.course__lectures .lecture {
+  padding: var(--space-xs) 0;
+  font-size: var(--text-sm);
+  color: var(--c-ink-medium);
+}
+
+.course__lectures .lecture__title {
+  transition: color 0.15s ease;
+}
+
+.course__lectures .lecture__title:hover {
+  color: var(--c-accent);
+}
+
+/* ==========================================================================
+   13. Course Header (course page)
+   ========================================================================== */
+
+.course-header {
+  margin-bottom: var(--space-xl);
+}
+
+.course-header__title {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+.course-header__meta {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-md);
+}
+
+.course-header__description {
+  font-size: var(--text-base);
+  color: var(--c-ink-medium);
+  line-height: 1.55;
+  max-width: 50ch;
+}
+
+.course-header__tags {
+  margin-top: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--c-ink-light);
+  letter-spacing: 0.05em;
+}
+
+.course-header__tag + .course-header__tag::before {
+  content: ", ";
+}
+
+/* ==========================================================================
+   14. Syllabus (course page)
+   ========================================================================== */
+
+.syllabus {
+  margin-bottom: var(--space-2xl);
+}
+
+.syllabus__title {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-ink-medium);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--c-ink-light);
+  display: inline-block;
+}
+
+.syllabus__section {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-light);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  padding-left: 40px;
+}
+
+/* Lecture item in syllabus (numbered grid) */
+.syllabus .lecture {
+  display: grid;
+  grid-template-columns: 32px auto auto;
+  width: fit-content;
+  gap: var(--space-sm);
+  align-items: baseline;
+  padding: var(--space-sm) 0;
+}
+
+.syllabus .lecture__num {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--c-ink-light);
+  text-align: right;
+}
+
+.syllabus .lecture__title {
+  font-weight: 400;
+  transition: color 0.15s ease;
+}
+
+.syllabus .lecture__title:hover {
+  color: var(--c-accent);
+}
+
+/* ==========================================================================
+   15. Footer
+   ========================================================================== */
+
+.footer {
+  margin-top: var(--space-2xl);
+  font-size: var(--text-sm);
+  color: var(--c-ink-light);
+}
+
+/* ==========================================================================
+   16. Responsive
+   ========================================================================== */
+
+@media (max-width: 700px) {
+  .margin-stats {
+    display: none;
+  }
+}
+
+@media (max-width: 540px) {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .items {
+    padding-left: var(--space-md);
+  }
+
+  .course {
+    padding-left: var(--space-md);
+  }
+
+  .syllabus .lecture {
+    grid-template-columns: 28px 1fr auto;
+  }
+}
+
+/* ==========================================================================
+   12. About
+   ========================================================================== */
+
+.about__bio {
+  margin-top: var(--space-lg);
+  line-height: 1.6;
+  color: var(--c-ink-medium);
+}
+
+.about__bio p {
+  margin: 0;
+}
+
+.about__contacts {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--c-ink-light);
+}
+
+.about__contacts a {
+  color: var(--c-ink-medium);
+  transition: color 0.15s ease;
+}
+
+.about__contacts a:hover {
+  color: var(--c-accent);
+}

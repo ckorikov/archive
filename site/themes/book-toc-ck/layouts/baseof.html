@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ site.Language.LanguageCode | default "en" }}">
+<head>
+  {{- partial "head.html" . -}}
+</head>
+<body>
+  {{- partial "margin_stats.html" . -}}
+
+  <div class="page">
+    <header class="header">
+      {{- partial "header.html" . -}}
+    </header>
+
+    <nav class="nav">
+      {{- partial "nav.html" . -}}
+    </nav>
+
+    <main>
+      {{- block "main" . }}{{ end -}}
+    </main>
+
+    <footer class="footer">
+      {{- partial "footer.html" . -}}
+    </footer>
+  </div>
+</body>
+</html>

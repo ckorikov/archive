@@ -1,0 +1,29 @@
+{{- $course := . -}}
+<article class="course">
+  <div class="course__header">
+    <h3 class="course__title">
+      <a href="{{ $course.RelPermalink }}">{{ $course.Title }}</a>
+    </h3>
+    {{- with $course.Params.year }}
+      <span class="course__year">{{ . }}</span>
+    {{- end -}}
+  </div>
+
+  {{- with $course.Params.description }}
+    <p class="course__description">{{ . }}</p>
+  {{- end -}}
+
+  <div class="course__meta">
+    {{- range $course.Params.tags -}}
+      <span class="course__tag">{{ . }}</span>
+    {{- end -}}
+  </div>
+
+  {{- with $course.Params.lectures }}
+    <div class="course__lectures">
+      {{- range . -}}
+        {{- partial "lecture_link.html" . -}}
+      {{- end -}}
+    </div>
+  {{- end -}}
+</article>

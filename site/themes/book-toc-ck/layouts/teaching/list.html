@@ -1,0 +1,31 @@
+{{ define "main" }}
+  <h1 class="page-title">{{ .Title | default "Teaching" }}</h1>
+
+  {{- .Content -}}
+
+  {{- range .Params.schools }}
+    <section class="school">
+      <h2 class="school__title">{{ .name }}</h2>
+
+      {{- range .courses }}
+        <article class="course">
+          <div class="course__header">
+            <h3 class="course__title">
+              <a href="/teaching/{{ .slug }}/">{{ .title }}</a>
+            </h3>
+            <span class="course__year">{{ .year }}</span>
+          </div>
+          {{- with .lectures }}
+            <div class="course__lectures">
+              {{- range . }}
+                <div class="lecture">
+                  <a href="{{ .url | default "#" }}" class="lecture__title">{{ .title }}</a>
+                </div>
+              {{- end }}
+            </div>
+          {{- end }}
+        </article>
+      {{- end -}}
+    </section>
+  {{- end -}}
+{{ end }}

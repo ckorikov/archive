@@ -1,0 +1,5 @@
+{{- with (site.GetPage "/").Params.stats -}}
+<div class="margin-stats">
+  {{- .papers }} papers · {{ .courses }} courses · {{ .year_start }}–{{ .year_end -}}
+</div>
+{{- end -}}
