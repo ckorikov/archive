@@ -41,8 +41,7 @@ generate: validate
 	uv run --project $(TOOLS_DIR) $(TOOLS_DIR)/generate.py \
 		--publications $(PUBLICATIONS) \
 		--config $(CONFIG) \
-		--output $(CONTENT_DIR) \
-		--clean
+		--output $(CONTENT_DIR)
 
 # Incremental build via stamp file
 $(CONTENT_STAMP): $(PUBLICATIONS) $(CONFIG)
@@ -62,7 +61,8 @@ serve: $(CONTENT_STAMP)
 
 # Clean generated files (keeps publications.json)
 clean:
-	rm -rf $(DEPLOYMENT_DIR) $(CONTENT_DIR) $(SITE_DIR)/public
+	rm -rf $(DEPLOYMENT_DIR) $(CONTENT_DIR)
+	rm -f $(SITE_DIR)/static/llms.txt $(SITE_DIR)/static/ai.txt
 
 # Check and fix Python code
 check:
