@@ -2,6 +2,7 @@ baseURL = 'https://korikov.cc/'
 languageCode = 'en-us'
 title = 'Archive'
 theme = 'book-toc-ck'
+buildFuture = true
 disableKinds = ["taxonomy", "term"]
 enableRobotsTxt = true
 
