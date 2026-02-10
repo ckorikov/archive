@@ -21,6 +21,9 @@ enableRobotsTxt = true
 [params.analytics]
   yandex_metrika = 54620479
 
+[minify.tdewolff.js]
+  keepVarNames = true
+
 [params.favicon]
   ico = "/favicon.ico"
   png32 = "/favicon-32x32.png"
