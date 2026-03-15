@@ -153,10 +153,7 @@ class Course(BaseModel):
     @property
     def tags(self) -> set[str]:
         """Aggregate all tags from lectures."""
-        result: set[str] = set()
-        for lec in self.lectures:
-            result.update(lec.tags)
-        return result
+        return {t for lec in self.lectures for t in lec.tags}
 
     @property
     def latest_date(self) -> tuple[int, int, int]:

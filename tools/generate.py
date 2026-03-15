@@ -2,6 +2,7 @@
 """Generate Hugo content from publications.json + archive.yaml."""
 
 import logging
+import tomllib
 from datetime import date
 from pathlib import Path
 
@@ -340,14 +341,6 @@ def generate_section(
     log.info(f"Generated {clean_path}/_index.md ({len(publications)} publications)")
 
 
-def group_courses_by_school(courses: list[Course]) -> dict[str, list[Course]]:
-    """Group courses by school, sorted by latest date."""
-    by_school: dict[str, list[Course]] = {}
-    for course in courses:
-        by_school.setdefault(course.school, []).append(course)
-    return by_school
-
-
 def generate_course_page(
     teaching_dir: Path,
     course: Course,
@@ -384,7 +377,9 @@ def generate_teaching(
 ) -> None:
     """Generate teaching section with course pages."""
     teaching_dir = content_dir / "teaching"
-    by_school = group_courses_by_school(courses)
+    by_school: dict[str, list[Course]] = {}
+    for course in courses:
+        by_school.setdefault(course.school, []).append(course)
 
     # Sort schools by their latest course date (most recent first)
     schools_sorted = sorted(
@@ -527,8 +522,6 @@ def build_llms_txt(
 
 def read_base_url(site_dir: Path) -> str:
     """Read baseURL from hugo.toml, stripping trailing slash."""
-    import tomllib
-
     with (site_dir / "hugo.toml").open("rb") as f:
         data = tomllib.load(f)
     return data["baseURL"].rstrip("/")

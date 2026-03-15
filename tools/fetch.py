@@ -34,10 +34,7 @@ class ZoteroFetcherConfig:
         api_key = os.environ.get("ZOTERO_API_KEY")
         library_id = os.environ.get("ZOTERO_LIBRARY_ID")
         if not api_key or not library_id:
-            raise SystemExit(
-                "Missing ZOTERO_API_KEY or ZOTERO_LIBRARY_ID.\n"
-                "Set credentials in .env (see README)."
-            )
+            raise SystemExit("Missing ZOTERO_API_KEY or ZOTERO_LIBRARY_ID.\nSet credentials in .env (see README).")
         return cls(
             api_key=api_key,
             library_id=int(library_id),
@@ -128,12 +125,12 @@ def fetch_item_details(zt: zotero.Zotero, key: str, retries: int = 3) -> dict[st
         try:
             return zt.item(key)
         except Exception as e:
-            if attempt < retries - 1:
-                delay = 2**attempt  # 1s, 2s, 4s
-                log.debug(f"Retry {attempt + 1}/{retries} for {key} in {delay}s: {e}")
-                time.sleep(delay)
-            else:
+            if attempt == retries - 1:
                 raise
+            delay = 2**attempt  # 1s, 2s, 4s
+            log.debug(f"Retry {attempt + 1}/{retries} for {key} in {delay}s: {e}")
+            time.sleep(delay)
+    raise RuntimeError(f"Failed to fetch {key} after {retries} retries")
 
 
 def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:

@@ -9,11 +9,6 @@ from playwright.sync_api import Page, expect
 def test_page_loads(page: Page, path: str, name: str) -> None:
     response = page.goto(BASE_URL + path)
     assert response is not None and response.status == 200, f"{path} returned {response}"
-
-
-@pytest.mark.parametrize("path,name", PAGES)
-def test_no_404_text(page: Page, path: str, name: str) -> None:
-    page.goto(BASE_URL + path)
     expect(page.locator("body")).not_to_contain_text("404")
 
 
