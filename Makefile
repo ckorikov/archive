@@ -68,8 +68,8 @@ clean:
 # Lint all source files (Python + YAML + HTML)
 lint:
 	$(UV_RUN) ruff check $(TOOLS_DIR)
-	$(UV_RUN) yamllint -c .yamllint.yaml .github/workflows/ archive.yaml
-	$(UV_RUN) djlint $(SITE_DIR)/themes/
+	$(UV_RUN) yamllint -c $(TOOLS_DIR)/.yamllint.yaml .github/workflows/ archive.yaml
+	$(UV_RUN) djlint --configuration $(TOOLS_DIR)/pyproject.toml $(SITE_DIR)/themes/
 
 # Alias for lint
 check: lint
@@ -82,5 +82,5 @@ test:
 format:
 	$(UV_RUN) ruff format $(TOOLS_DIR)
 	$(UV_RUN) ruff check --fix $(TOOLS_DIR)
-	$(UV_RUN) djlint $(SITE_DIR)/themes/ --reformat
+	$(UV_RUN) djlint --configuration $(TOOLS_DIR)/pyproject.toml $(SITE_DIR)/themes/ --reformat
 	npx --yes prettier --write "$(SITE_DIR)/themes/**/*.css"
