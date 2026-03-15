@@ -121,3 +121,6 @@ site/static/llms.txt
 
 # Build output (CI deploys)
 public/
+
+# Visual test snapshots (local only)
+tools/tests/snapshots/

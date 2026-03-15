@@ -9,7 +9,7 @@ PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
 CONTENT_STAMP := $(CONTENT_DIR)/.stamp
 
-.PHONY: all build deploy serve debug clean fetch validate generate lint check format test test-update help
+.PHONY: all build deploy serve debug clean fetch validate generate lint check format test help
 
 all: build
 
@@ -77,10 +77,6 @@ check: lint
 # Run smoke and visual tests (server must be running: make serve)
 test:
 	$(UV_RUN) pytest $(TOOLS_DIR)/tests/ -v
-
-# Update visual snapshots
-test-update:
-	$(UV_RUN) pytest $(TOOLS_DIR)/tests/test_visual.py --snapshot-update -v
 
 # Format all source files (Python + HTML + CSS)
 format:
