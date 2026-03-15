@@ -9,11 +9,11 @@
 
 :root {
   /* Colors */
-  --c-paper: #fcfcfa;
-  --c-ink: #1a1917;
-  --c-ink-medium: #5c5955;
-  --c-ink-light: #9a9590;
-  --c-ink-faint: #c5c2bc;
+  --c-paper: #f2ece2;
+  --c-ink: #2c2925;
+  --c-ink-medium: #6b6560;
+  --c-ink-light: #a09890;
+  --c-ink-faint: #ccc8c0;
   --c-accent: #6b1c00;
   --c-pdf: #2d6a4f;
 
@@ -25,6 +25,7 @@
   --text-sm: 0.9rem;
   --text-base: 1.05rem;
   --text-lg: 1.15rem;
+  --text-xl: 1.35rem;
 
   /* Spacing */
   --space-xs: 0.25rem;
@@ -374,7 +375,7 @@ a {
 }
 
 .course-header__title {
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   font-weight: 500;
   margin-bottom: var(--space-sm);
 }
@@ -390,6 +391,7 @@ a {
   font-size: var(--text-base);
   color: var(--c-ink-medium);
   line-height: 1.55;
+  margin-top: var(--space-md);
 }
 
 .course-header__tags {
@@ -435,8 +437,7 @@ a {
 /* Lecture item in syllabus (numbered grid) */
 .syllabus .lecture {
   display: grid;
-  grid-template-columns: 32px auto auto;
-  width: fit-content;
+  grid-template-columns: 32px 1fr auto;
   gap: var(--space-sm);
   align-items: baseline;
   padding: var(--space-sm) 0;
