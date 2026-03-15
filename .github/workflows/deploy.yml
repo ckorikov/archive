@@ -3,8 +3,6 @@ name: Deploy
 on:
   push:
     branches: [master]
-  schedule:
-    - cron: '0 6 1 * *'
   workflow_dispatch:
 
 permissions:
@@ -29,6 +27,9 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: tools/uv.lock
+
+      - name: Lint
+        run: make lint
 
       - name: Build
         env:
