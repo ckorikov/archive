@@ -1,22 +1,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s — %s" .Title site.Title }}{{ end }}</title>
-
 {{/* Favicon */}}
 {{- with site.Params.favicon -}}
-{{- with .ico }}<link rel="icon" href="{{ . }}" sizes="any">{{ end }}
-{{- with .png32 }}<link rel="icon" type="image/png" sizes="32x32" href="{{ . }}">{{ end }}
-{{- with .png16 }}<link rel="icon" type="image/png" sizes="16x16" href="{{ . }}">{{ end }}
-{{- with .apple_touch_icon }}<link rel="apple-touch-icon" sizes="180x180" href="{{ . }}">{{ end }}
-{{- with .manifest }}<link rel="manifest" href="{{ . }}">{{ end }}
+{{- with .ico }}
+<link rel="icon" href="{{ . }}" sizes="any">
+{{ end }}
+{{- with .png32 }}
+<link rel="icon" type="image/png" sizes="32x32" href="{{ . }}">
+{{ end }}
+{{- with .png16 }}
+<link rel="icon" type="image/png" sizes="16x16" href="{{ . }}">
+{{ end }}
+{{- with .apple_touch_icon }}
+<link rel="apple-touch-icon" sizes="180x180" href="{{ . }}">
+{{ end }}
+{{- with .manifest }}
+<link rel="manifest" href="{{ . }}">
+{{ end }}
 {{- end -}}
-
 {{/* Verification */}}
 {{- with site.Params.verification -}}
-{{- with .yandex }}<meta name="yandex-verification" content="{{ . }}">{{ end }}
-{{- with .google }}<meta name="google-site-verification" content="{{ . }}">{{ end }}
+{{- with .yandex }}
+<meta name="yandex-verification" content="{{ . }}">
+{{ end }}
+{{- with .google }}
+<meta name="google-site-verification" content="{{ . }}">
+{{ end }}
 {{- end -}}
-
 {{/* Description */}}
 {{- $description := site.Params.description -}}
 {{- with .Description }}{{ $description = . }}{{ end -}}
@@ -30,12 +41,13 @@
 {{- with site.Params.author }}
 <meta name="author" content="{{ . }}">
 {{- end }}
-
 {{/* Open Graph */}}
-<meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:title"
+      content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
 <meta property="og:url" content="{{ .Permalink }}">
 <meta property="og:site_name" content="{{ site.Title }}">
-<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:type"
+      content="{{ if .IsPage }}article{{ else }}website{{ end }}">
 {{- with $description }}
 <meta property="og:description" content="{{ . }}">
 {{- end }}
@@ -44,22 +56,31 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 {{- end }}
-
 {{- with site.Params.og_image }}
 <meta name="twitter:card" content="summary_large_image">
 {{- end }}
-
 {{/* RSS */}}
 {{- with .OutputFormats.Get "rss" }}
-<link rel="alternate" type="application/rss+xml" title="{{ site.Title }}" href="{{ .Permalink }}">
+<link rel="alternate"
+      type="application/rss+xml"
+      title="{{ site.Title }}"
+      href="{{ .Permalink }}">
 {{- end }}
-
 {{/* Canonical */}}
 <link rel="canonical" href="{{ .Permalink }}">
-
-{{/* Self-hosted fonts */}}
-<link rel="stylesheet" href="/fonts/cormorant.css">
-
-{{/* Main CSS */}}
-{{- $css := resources.Get "css/main.css" | minify | fingerprint -}}
+{{/* Preload key font subsets (latin + cyrillic — always used) */}}
+<link rel="preload"
+      href="/fonts/cormorant-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin>
+<link rel="preload"
+      href="/fonts/cormorant-cyrillic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin>
+{{/* Main CSS (fonts + styles bundled) */}}
+{{- $fonts := resources.Get "css/fonts.css" -}}
+{{- $main := resources.Get "css/main.css" -}}
+{{- $css := slice $fonts $main | resources.Concat "css/bundle.css" | minify | fingerprint -}}
 <link rel="stylesheet" href="{{ $css.RelPermalink }}">
