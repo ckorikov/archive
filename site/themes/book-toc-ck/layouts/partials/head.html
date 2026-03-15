@@ -57,10 +57,8 @@
 {{/* Canonical */}}
 <link rel="canonical" href="{{ .Permalink }}">
 
-{{/* Google Fonts */}}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+{{/* Self-hosted fonts */}}
+<link rel="stylesheet" href="/fonts/cormorant.css">
 
 {{/* Main CSS */}}
 {{- $css := resources.Get "css/main.css" | minify | fingerprint -}}
