@@ -120,4 +120,4 @@ site/static/ai.txt
 site/static/llms.txt
 
 # Build output (CI deploys)
-docs/
+public/

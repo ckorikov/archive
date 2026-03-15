@@ -2,14 +2,14 @@ STATIC_DATA_DIR := site/static/data
 SITE_DIR := site
 TOOLS_DIR := tools
 CONTENT_DIR := $(SITE_DIR)/content
-DEPLOYMENT_DIR := docs
+DEPLOYMENT_DIR := public
 UV_RUN := uv run --project $(TOOLS_DIR)
 
 PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
 CONTENT_STAMP := $(CONTENT_DIR)/.stamp
 
-.PHONY: all build deploy serve debug clean fetch validate generate lint check format help
+.PHONY: all build deploy serve debug clean fetch validate generate lint check format test test-update help
 
 all: build
 
@@ -73,6 +73,14 @@ lint:
 
 # Alias for lint
 check: lint
+
+# Run smoke and visual tests (server must be running: make serve)
+test:
+	$(UV_RUN) pytest $(TOOLS_DIR)/tests/ -v
+
+# Update visual snapshots
+test-update:
+	$(UV_RUN) pytest $(TOOLS_DIR)/tests/test_visual.py --snapshot-update -v
 
 # Format all source files (Python + HTML + CSS)
 format:
