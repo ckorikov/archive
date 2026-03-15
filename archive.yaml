@@ -8,7 +8,7 @@ site:
 # Groups for main page (order matters, first match wins)
 groups:
   - name: "Research"
-    tags: [phd, master, casimir, conference, intel]
+    tags: [phd, master, casimir, conference, intel, ai]
   - name: "Teaching"
     tags: [polytech, jiangsu, mipt, bar]
   - name: "Popscience"
@@ -23,6 +23,34 @@ aliases:
   "Polytech":
     - "Saint Petersburg Polytechnic University"
     - "SPbPU"
+
+# Course descriptions (keyed by slug)
+courses:
+  - slug: 2026-mipt-effective-ai-2026
+    description: >-
+      Практические методы эффективной реализации моделей ИИ: числовые
+      представления, архитектура трансформеров, сжатие и ускорение LLM,
+      аппаратные оптимизации.
+  - slug: 2025-mipt-effective-ai-2025
+    description: ""
+  - slug: 2022-polytech-informatika-2022
+    description: ""
+  - slug: 2020-polytech-informatika-2020
+    description: ""
+  - slug: 2019-polytech-informatika-2019
+    description: ""
+  - slug: 2019-polytech-vvedenie-v-professionalnuju-dejatelnost-2019
+    description: ""
+  - slug: 2019-online-python-bar-review
+    description: ""
+  - slug: 2019-jiangsu-normal-university-raspoznavanie-iskusstvennym-intellektom-2019
+    description: ""
+  - slug: 2019-jiangsu-normal-university-poluprovodnikovyj-fotoelektricheskij-material-2019
+    description: ""
+  - slug: 2015-polytech-informatsionnye-tehnologii-v-tehnicheskoj-fizike-2015
+    description: ""
+  - slug: 2014-polytech-tex-2014
+    description: ""
 
 sections:
   - path: "/"
@@ -39,5 +67,11 @@ sections:
     label: "Casimir Physics"
     filter:
       tag: casimir
+    group_by: [year]
+
+  - path: "/ai/"
+    label: "Artificial Intelligence"
+    filter:
+      tag: ai
     group_by: [year]
 
