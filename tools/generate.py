@@ -71,13 +71,17 @@ def lecture_to_item(lec: Publication) -> dict:
 
 def course_to_card(course: Course, config: ArchiveConfig) -> dict:
     """Convert course to card dict with lectures (teaching page)."""
-    return {
+    card: dict = {
         "title": config.normalize(course.name),
         "slug": course.slug,
         "year": course.year,
         "lectures_count": len(course.lectures),
         "lectures": [lecture_to_item(lec) for lec in course.lectures],
     }
+    description = config.course_description(course.slug)
+    if description:
+        card["description"] = description
+    return card
 
 
 def group_pubs_by_year(
@@ -264,19 +268,23 @@ def group_items(
         matched_courses = match_courses_by_tags(courses, group_tags, seen_course_slugs, config)
 
         if matched_pubs or matched_courses:
-            groups_data.append({
-                "name": group.name,
-                "items": group_by_year(matched_pubs, matched_courses, config),
-            })
+            groups_data.append(
+                {
+                    "name": group.name,
+                    "items": group_by_year(matched_pubs, matched_courses, config),
+                }
+            )
 
     # Other: items not matching any group
     other_pubs = [p for p in standalone_pubs if p.id not in seen_pub_ids]
     other_courses = [c for c in courses if c.slug not in seen_course_slugs]
     if other_pubs or other_courses:
-        groups_data.append({
-            "name": "Other",
-            "items": group_by_year(other_pubs, other_courses, config),
-        })
+        groups_data.append(
+            {
+                "name": "Other",
+                "items": group_by_year(other_pubs, other_courses, config),
+            }
+        )
 
     return groups_data
 
@@ -352,7 +360,7 @@ def generate_course_page(
         item["section"] = config.normalize(lec.section) if lec.section else ""
         lectures_data.append(item)
 
-    course_data = {
+    course_data: dict = {
         "title": config.normalize(course.name),
         "type": "course",
         "layout": "course/single",
@@ -363,6 +371,9 @@ def generate_course_page(
         "lectures_count": len(course.lectures),
         "lectures": lectures_data,
     }
+    description = config.course_description(course.slug)
+    if description:
+        course_data["description"] = description
     write_frontmatter(teaching_dir / f"{course.slug}.md", course_data)
 
 
@@ -385,10 +396,12 @@ def generate_teaching(
     schools_data = []
     for school in schools_sorted:
         school_courses = sorted(by_school[school], key=lambda c: c.latest_date, reverse=True)
-        schools_data.append({
-            "name": school,
-            "courses": [course_to_card(c, config) for c in school_courses],
-        })
+        schools_data.append(
+            {
+                "name": school,
+                "courses": [course_to_card(c, config) for c in school_courses],
+            }
+        )
 
     # Teaching index
     all_lectures = [lec for c in courses for lec in c.lectures]
@@ -472,8 +485,7 @@ def build_llms_txt(
         f"# {config.site.author} — Archive",
         "",
         f"> {bio}",
-        f"> {stats['papers']} papers, {stats['courses']} courses, "
-        f"{stats['year_start']}–{stats['year_end']}.",
+        f"> {stats['papers']} papers, {stats['courses']} courses, {stats['year_start']}–{stats['year_end']}.",
         "",
         "## Pages",
         "",
@@ -503,10 +515,7 @@ def build_llms_txt(
     lines += ["", "## Courses", ""]
     for course in courses:
         url = f"{base_url}/teaching/{course.slug}/"
-        lines.append(
-            f"- [{course.name}]({url}): "
-            f"{course.school}, {course.year}, {len(course.lectures)} lectures"
-        )
+        lines.append(f"- [{course.name}]({url}): {course.school}, {course.year}, {len(course.lectures)} lectures")
 
     contact_lines = format_contacts(config.site.contacts)
     if contact_lines:
@@ -514,7 +523,6 @@ def build_llms_txt(
 
     lines.append("")
     return "\n".join(lines)
-
 
 
 def read_base_url(site_dir: Path) -> str:

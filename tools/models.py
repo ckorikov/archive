@@ -166,6 +166,13 @@ class Course(BaseModel):
         return max(lec.date_sort_key for lec in self.lectures)
 
 
+class CourseConfig(BaseModel):
+    """Course metadata from archive.yaml."""
+
+    slug: str
+    description: str = ""
+
+
 class Group(BaseModel):
     """Group for main page grouping by tags."""
 
@@ -212,6 +219,7 @@ class ArchiveConfig(BaseModel):
 
     site: SiteConfig
     groups: list[Group] = Field(default_factory=list)
+    courses: list[CourseConfig] = Field(default_factory=list)
     sections: list[Section] = Field(default_factory=list)
     aliases: dict[str, list[str]] = Field(default_factory=dict)
 
@@ -223,6 +231,13 @@ class ArchiveConfig(BaseModel):
         with path.open() as f:
             data = yaml.safe_load(f)
         return cls.model_validate(data)
+
+    def course_description(self, slug: str) -> str:
+        """Return description for a course slug, or empty string."""
+        for c in self.courses:
+            if c.slug == slug:
+                return c.description
+        return ""
 
     def normalize(self, value: str) -> str:
         """Normalize value using aliases. Return canonical form."""
