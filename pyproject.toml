@@ -1,0 +1,8 @@
+[tool.djlint]
+profile = "hugo"
+# H006: img width/height (Hugo-rendered images)
+# H016/H030/H031: title/meta in partials (not full pages)
+# H021: inline styles (Yandex Metrica)
+# H025: orphan </a> inside Go template printf strings
+# D018/J018: Django/Jinja URL patterns (not Hugo)
+ignore = "D018,H006,H016,H021,H025,H030,H031,J018"

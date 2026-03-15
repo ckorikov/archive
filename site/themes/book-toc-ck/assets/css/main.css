@@ -328,7 +328,6 @@ a {
   color: var(--c-ink-medium);
   line-height: 1.5;
   margin-bottom: var(--space-sm);
-  max-width: 45ch;
 }
 
 .course__meta {
@@ -391,7 +390,6 @@ a {
   font-size: var(--text-base);
   color: var(--c-ink-medium);
   line-height: 1.55;
-  max-width: 50ch;
 }
 
 .course-header__tags {

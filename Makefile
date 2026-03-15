@@ -9,7 +9,7 @@ PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
 CONTENT_STAMP := $(CONTENT_DIR)/.stamp
 
-.PHONY: all build deploy serve debug clean fetch validate generate check format help
+.PHONY: all build deploy serve debug clean fetch validate generate lint check format help
 
 all: build
 
@@ -24,8 +24,8 @@ help:
 	@echo "  fetch     Fetch publications from Zotero"
 	@echo "  validate  Validate data files"
 	@echo "  generate  Generate Hugo content"
-	@echo "  check     Check Python code with ruff"
-	@echo "  format    Format Python code with ruff"
+	@echo "  lint      Lint all source files (Python, YAML, HTML)"
+	@echo "  format    Format all source files (Python, HTML, CSS)"
 
 # Fetch from Zotero API
 fetch:
@@ -65,10 +65,18 @@ clean:
 	rm -rf $(DEPLOYMENT_DIR) $(CONTENT_DIR)
 	rm -f $(SITE_DIR)/static/llms.txt $(SITE_DIR)/static/ai.txt
 
-# Check and fix Python code
-check:
-	$(UV_RUN) ruff check --fix $(TOOLS_DIR)
+# Lint all source files (Python + YAML + HTML)
+lint:
+	$(UV_RUN) ruff check $(TOOLS_DIR)
+	$(UV_RUN) yamllint -c .yamllint.yaml .github/workflows/ archive.yaml
+	$(UV_RUN) djlint $(SITE_DIR)/themes/
 
-# Format Python code
+# Alias for lint
+check: lint
+
+# Format all source files (Python + HTML + CSS)
 format:
 	$(UV_RUN) ruff format $(TOOLS_DIR)
+	$(UV_RUN) ruff check --fix $(TOOLS_DIR)
+	$(UV_RUN) djlint $(SITE_DIR)/themes/ --reformat
+	npx --yes prettier --write "$(SITE_DIR)/themes/**/*.css"
