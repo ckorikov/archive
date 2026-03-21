@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: tools/uv.lock
@@ -37,7 +37,7 @@ jobs:
           ZOTERO_LIBRARY_ID: ${{ secrets.ZOTERO_LIBRARY_ID }}
         run: make fetch && make deploy
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: public
 
