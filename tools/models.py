@@ -1,13 +1,13 @@
 """Pydantic models and utilities for archive-tools."""
 
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class PublicationType(str, Enum):
+class PublicationType(StrEnum):
     """Supported publication types from Zotero."""
 
     JOURNAL_ARTICLE = "journalArticle"
