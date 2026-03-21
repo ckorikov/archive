@@ -9,7 +9,7 @@
 
 :root {
   /* Colors */
-  --c-paper: #f2ece2;
+  --c-paper: #f5f3ee;
   --c-ink: #2c2925;
   --c-ink-medium: #6b6560;
   --c-ink-light: #a09890;
@@ -34,6 +34,9 @@
   --space-lg: 2rem;
   --space-xl: 4rem;
   --space-2xl: 6rem;
+
+  /* Transitions */
+  --transition-color: color 0.15s ease;
 }
 
 /* ==========================================================================
@@ -129,7 +132,7 @@ a {
   font-weight: 400;
   color: var(--c-ink-light);
   padding: var(--space-xs) 0;
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .nav__item:hover {
@@ -142,19 +145,29 @@ a {
 }
 
 /* ==========================================================================
-   6. Page Title (for section pages)
+   6. Section Titles
    ========================================================================== */
 
-.page-title {
+.page-title,
+.group_type__title,
+.syllabus__title {
   font-size: var(--text-sm);
   font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--c-ink-medium);
-  margin-bottom: var(--space-xl);
   padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--c-ink-light);
   display: inline-block;
+}
+
+.page-title,
+.group_type__title {
+  margin-bottom: var(--space-xl);
+}
+
+.syllabus__title {
+  margin-bottom: var(--space-lg);
 }
 
 /* ==========================================================================
@@ -176,7 +189,7 @@ a {
 
 .page-tags a {
   color: var(--c-ink-medium);
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .page-tags a:hover {
@@ -198,17 +211,6 @@ a {
   margin-bottom: var(--space-2xl);
 }
 
-.group_type__title {
-  font-size: var(--text-sm);
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--c-ink-medium);
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid var(--c-ink-light);
-  display: inline-block;
-}
 
 /* ==========================================================================
    9. Group Year
@@ -244,7 +246,7 @@ a {
 
 .item__title {
   font-weight: 400;
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .item__title:hover {
@@ -266,7 +268,7 @@ a {
   font-style: normal;
   color: var(--c-pdf);
   margin-left: var(--space-sm);
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .item__pdf:hover,
@@ -341,7 +343,8 @@ a {
   display: inline;
 }
 
-.course__tag + .course__tag::before {
+.course__tag + .course__tag::before,
+.course-header__tag + .course-header__tag::before {
   content: ", ";
 }
 
@@ -359,7 +362,7 @@ a {
 }
 
 .course__lectures .lecture__title {
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .course__lectures .lecture__title:hover {
@@ -401,10 +404,6 @@ a {
   letter-spacing: 0.05em;
 }
 
-.course-header__tag + .course-header__tag::before {
-  content: ", ";
-}
-
 /* ==========================================================================
    14. Syllabus (course page)
    ========================================================================== */
@@ -413,17 +412,6 @@ a {
   margin-bottom: var(--space-2xl);
 }
 
-.syllabus__title {
-  font-size: var(--text-sm);
-  font-weight: 400;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--c-ink-medium);
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid var(--c-ink-light);
-  display: inline-block;
-}
 
 .syllabus__section {
   font-size: var(--text-sm);
@@ -452,7 +440,7 @@ a {
 
 .syllabus .lecture__title {
   font-weight: 400;
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
 .syllabus .lecture__title:hover {
@@ -502,11 +490,14 @@ a {
 }
 
 /* ==========================================================================
-   12. About
+   17. About
    ========================================================================== */
 
+.about .page-title {
+  margin-bottom: var(--space-lg);
+}
+
 .about__bio {
-  margin-top: var(--space-lg);
   line-height: 1.6;
   color: var(--c-ink-medium);
 }
@@ -515,17 +506,67 @@ a {
   margin: 0;
 }
 
+.about__bio p:last-child {
+  word-spacing: 0.2em;
+}
+
 .about__contacts {
   margin-top: var(--space-md);
   font-size: var(--text-sm);
   color: var(--c-ink-light);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.about__contacts a {
+.about__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
   color: var(--c-ink-medium);
-  transition: color 0.15s ease;
+  transition: var(--transition-color);
 }
 
-.about__contacts a:hover {
+.about__contact:hover {
   color: var(--c-accent);
+}
+
+.about__contact + .about__contact::before {
+  content: "·";
+  margin: 0 0.5em;
+  color: var(--c-ink-faint);
+}
+
+.about__icon {
+  width: 0.85em;
+  height: 0.85em;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.company {
+  white-space: nowrap;
+  color: var(--c-ink-medium);
+  transition: var(--transition-color);
+}
+
+.company:hover {
+  color: var(--c-accent);
+}
+
+.company:hover .inline-logo {
+  filter: none;
+  opacity: 1;
+}
+
+.inline-logo {
+  height: 1cap;
+  width: auto;
+  vertical-align: baseline;
+  margin-right: 0.15em;
+  filter: grayscale(1) sepia(0.2) brightness(0.75);
+  opacity: 0.6;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
 }
