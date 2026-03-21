@@ -1,9 +1,15 @@
 site:
   author: "Constantine Korikov"
-  bio: "Researcher and educator. Huawei, MIPT, ex-Intel, ex-Syntacore, ex-Healbe, ex-Polytech."
+  bio: |-
+    Researcher and educator.
+
+    {{< logo "huawei" "Huawei" >}}, {{< logo "mipt" "MIPT" >}},
+    {{< logo "intel" "ex-Intel" >}}, {{< logo "syntacore" "ex-Syntacore" >}},
+    {{< logo "healbe" "ex-Healbe" >}}, {{< logo "polytech" "ex-Polytech" >}}.
   contacts:
     github: "ckorikov"
     scholar: "DgJb92EAAAAJ"
+    orcid: "0000-0001-6227-5542"
 
 # Groups for main page (order matters, first match wins)
 groups:

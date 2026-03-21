@@ -199,6 +199,7 @@ class Contacts(BaseModel):
     email: str | None = None
     github: str | None = None
     scholar: str | None = None
+    orcid: str | None = None
     linkedin: str | None = None
     twitter: str | None = None
 
