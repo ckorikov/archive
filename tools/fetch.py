@@ -119,16 +119,16 @@ def merge_preprints(
             if related is None or related.id in to_remove:
                 continue
 
-            preprint, primary = None, None
             if pub.type in PREPRINT_TYPES and related.type in PRIMARY_TYPES:
                 preprint, primary = pub, related
             elif related.type in PREPRINT_TYPES and pub.type in PRIMARY_TYPES:
                 preprint, primary = related, pub
+            else:
+                continue
 
-            if preprint and primary:
-                if primary.arxiv_url is None:
-                    primary.arxiv_url = preprint.url
-                to_remove.add(preprint.id)
+            if primary.arxiv_url is None:
+                primary.arxiv_url = preprint.url
+            to_remove.add(preprint.id)
 
     merged = [p for p in publications if p.id not in to_remove]
     if to_remove:
