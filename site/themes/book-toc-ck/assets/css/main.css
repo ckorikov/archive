@@ -211,7 +211,6 @@ a {
   margin-bottom: var(--space-2xl);
 }
 
-
 /* ==========================================================================
    9. Group Year
    ========================================================================== */
@@ -262,6 +261,10 @@ a {
   color: var(--c-ink-light);
 }
 
+.item__sep {
+  margin: 0 0.2em;
+}
+
 .item__pdf,
 .lecture__pdf {
   font-size: var(--text-xs);
@@ -273,6 +276,18 @@ a {
 
 .item__pdf:hover,
 .lecture__pdf:hover {
+  color: var(--c-accent);
+}
+
+.item__arxiv {
+  font-size: var(--text-xs);
+  font-style: normal;
+  color: var(--c-ink-medium);
+  margin-left: var(--space-sm);
+  transition: var(--transition-color);
+}
+
+.item__arxiv:hover {
   color: var(--c-accent);
 }
 
@@ -411,7 +426,6 @@ a {
 .syllabus {
   margin-bottom: var(--space-2xl);
 }
-
 
 .syllabus__section {
   font-size: var(--text-sm);
