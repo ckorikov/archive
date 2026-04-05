@@ -44,6 +44,8 @@ class ZoteroFetcherConfig:
 
 SKIP_TYPES = {"attachment", "note"}
 AUTHOR_TYPES = {"author", "presenter", None}
+PREPRINT_TYPES = {"preprint"}
+PRIMARY_TYPES = {"journalArticle", "conferencePaper", "report"}
 
 DATE_FORMATS = [
     ("%Y/%m/%d", lambda dt: (dt.year, dt.month, dt.day)),
@@ -82,6 +84,56 @@ def normalize_language(lang: str | None) -> str:
 def empty_to_none(value: str | None) -> str | None:
     """Convert empty string to None."""
     return value if value else None
+
+
+def extract_related_keys(data: dict[str, Any]) -> list[str]:
+    """Extract related item keys from Zotero relations field.
+
+    Zotero stores relations as URLs: http://zotero.org/users/123/items/KEY
+    """
+    relations = data.get("relations", {})
+    dc_relation = relations.get("dc:relation", [])
+    if isinstance(dc_relation, str):
+        dc_relation = [dc_relation]
+    matches = (re.search(r"/items/([A-Z0-9]+)$", url) for url in dc_relation)
+    return [m.group(1) for m in matches if m]
+
+
+def merge_preprints(
+    publications: list[Publication],
+    relations: dict[str, list[str]],
+) -> list[Publication]:
+    """Merge preprint+journal pairs: copy arXiv URL to primary, drop preprint.
+
+    Uses Zotero Related Items to detect pairs. Handles both directions
+    (preprint→journal and journal→preprint).
+    """
+    by_key = {p.id: p for p in publications}
+    to_remove: set[str] = set()
+
+    for pub in publications:
+        if pub.id in to_remove:
+            continue
+        for related_key in relations.get(pub.id, []):
+            related = by_key.get(related_key)
+            if related is None or related.id in to_remove:
+                continue
+
+            preprint, primary = None, None
+            if pub.type in PREPRINT_TYPES and related.type in PRIMARY_TYPES:
+                preprint, primary = pub, related
+            elif related.type in PREPRINT_TYPES and pub.type in PRIMARY_TYPES:
+                preprint, primary = related, pub
+
+            if preprint and primary:
+                if primary.arxiv_url is None:
+                    primary.arxiv_url = preprint.url
+                to_remove.add(preprint.id)
+
+    merged = [p for p in publications if p.id not in to_remove]
+    if to_remove:
+        log.info(f"Merged {len(to_remove)} preprint(s) into primary publications")
+    return merged
 
 
 def parse_item(data: dict[str, Any]) -> Publication | None:
@@ -155,8 +207,13 @@ def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
 
 
 def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
-    """Parse Zotero items into Publications, filtering invalid ones."""
+    """Parse Zotero items into Publications, filtering invalid ones.
+
+    Preprints related to journal articles via Zotero Related Items are merged:
+    the arXiv URL is copied to the primary publication and the preprint is dropped.
+    """
     publications = []
+    relations: dict[str, list[str]] = {}
     skipped_attachments = 0
     skipped_no_date = 0
 
@@ -173,6 +230,9 @@ def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
         pub = parse_item(data)
         if pub:
             publications.append(pub)
+            related = extract_related_keys(data)
+            if related:
+                relations[pub.id] = related
         else:
             log.warning(f"Skipped (no date): {title}")
             skipped_no_date += 1
@@ -180,7 +240,8 @@ def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
     log.info(f"Parsed {len(publications)}/{len(items)} items")
     if skipped_attachments or skipped_no_date:
         log.warning(f"Total skipped: {skipped_attachments} attachments, {skipped_no_date} no date")
-    return publications
+
+    return merge_preprints(publications, relations)
 
 
 @click.command()

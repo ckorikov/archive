@@ -74,6 +74,7 @@ class Publication(BaseModel):
     authors: list[Author] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     url: str | None = None
+    arxiv_url: str | None = None
     pdf: str | None = None  # Local PDF path (for archive)
     language: str = "english"
     course: str | None = Field(default=None, alias="series")

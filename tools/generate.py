@@ -45,6 +45,8 @@ def pub_to_item(pub: Publication, config: ArchiveConfig) -> dict:
         "authors": authors,
         "tags": tags,
     }
+    if pub.arxiv_url:
+        item["arxiv_url"] = pub.arxiv_url
     if pub.pdf:
         item["pdf"] = pub.pdf
     return item
