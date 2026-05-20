@@ -4,7 +4,9 @@
 import logging
 import os
 import re
+import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
@@ -171,24 +173,48 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
     )
 
 
-def fetch_item_details(zt: zotero.Zotero, key: str, retries: int = 3) -> dict[str, Any]:
-    """Fetch full item details with exponential backoff retry."""
+def fetch_item_details(zt_factory: Callable[[], zotero.Zotero], key: str, retries: int = 3) -> dict[str, Any]:
+    """Fetch full item details with exponential backoff retry.
+
+    Uses a per-thread Zotero client because pyzotero stores per-request state
+    (self.request, self.url_params) on the instance and is not thread-safe;
+    sharing one client across threads corrupts format detection and yields
+    raw bytes instead of parsed JSON.
+
+    On HTTP 429 pyzotero records a backoff but does not raise, returning raw
+    bytes instead — detect this and retry; the per-thread client's backoff
+    timer will throttle the next call.
+    """
+    zt = zt_factory()
     for attempt in range(retries):
         try:
-            return zt.item(key)
+            result = zt.item(key)
+            if isinstance(result, dict):
+                return result
+            log.debug(f"Rate-limited on {key} (attempt {attempt + 1}/{retries}): {result[:80]!r}")
         except Exception as e:
             if attempt == retries - 1:
                 raise
-            delay = 2**attempt  # 1s, 2s, 4s
-            log.debug(f"Retry {attempt + 1}/{retries} for {key} in {delay}s: {e}")
-            time.sleep(delay)
-    raise RuntimeError(f"Failed to fetch {key} after {retries} retries")
+            log.debug(f"Retry {attempt + 1}/{retries} for {key}: {e}")
+        if attempt < retries - 1:
+            time.sleep(2**attempt)  # 1s, 2s, 4s
+    raise RuntimeError(f"Failed to fetch {key} after {retries} retries (rate-limited)")
 
 
 def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
     """Fetch all items from Zotero with full details (parallel)."""
     log.info(f"Fetching from Zotero library {config.library_id}")
-    zt = zotero.Zotero(config.library_id, config.library_type, config.api_key)
+
+    local = threading.local()
+
+    def zt_factory() -> zotero.Zotero:
+        client = getattr(local, "client", None)
+        if client is None:
+            client = zotero.Zotero(config.library_id, config.library_type, config.api_key)
+            local.client = client
+        return client
+
+    zt = zt_factory()
     zt.add_parameters(sort="date")
 
     items = zt.everything(zt.publications())
@@ -198,7 +224,7 @@ def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
     detailed = []
 
     with ThreadPoolExecutor(max_workers=config.workers) as executor:
-        futures = {executor.submit(fetch_item_details, zt, key, config.retries): key for key in keys}
+        futures = {executor.submit(fetch_item_details, zt_factory, key, config.retries): key for key in keys}
         for future in as_completed(futures):
             detailed.append(future.result())
 
