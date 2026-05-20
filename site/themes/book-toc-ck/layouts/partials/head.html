@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s — %s" .Title site.Title }}{{ end }}</title>
+{{- $home_title := printf "%s — %s" site.Params.author site.Title -}}
+<title>{{ if .IsHome }}{{ $home_title }}{{ else }}{{ printf "%s — %s" .Title site.Title }}{{ end }}</title>
 {{/* Favicon */}}
 {{- with site.Params.favicon -}}
 {{- with .ico }}
@@ -43,7 +44,7 @@
 {{- end }}
 {{/* Open Graph */}}
 <meta property="og:title"
-      content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+      content="{{ if .IsHome }}{{ $home_title }}{{ else }}{{ .Title }}{{ end }}">
 <meta property="og:url" content="{{ .Permalink }}">
 <meta property="og:site_name" content="{{ site.Title }}">
 <meta property="og:type"
