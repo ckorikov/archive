@@ -231,6 +231,20 @@ a {
   margin-bottom: var(--space-sm);
 }
 
+.group_year__anchor {
+  color: inherit;
+  text-decoration: none;
+}
+
+.group_year__anchor:hover {
+  text-decoration: underline;
+}
+
+.group_year:target .group_year__title,
+:target > .group_year__title {
+  color: var(--c-ink);
+}
+
 /* ==========================================================================
    10. Items (publication list)
    ========================================================================== */

@@ -1,8 +1,9 @@
-<section class="group_type">
+{{- $type_slug := .title | urlize -}}
+<section class="group_type" id="{{ $type_slug }}">
   <h2 class="group_type__title">{{ .title }}</h2>
   {{- if .items }}
     {{- range .items }}
-      {{- partial "group_year.html" . -}}
+      {{- partial "group_year.html" (merge . (dict "type_slug" $type_slug)) -}}
     {{- end -}}
   {{- else if .pages }}
     {{- range .pages }}
@@ -11,8 +12,9 @@
       {{- if $lectureCount }}
         {{- $meta = printf "%s, %d lectures" $meta $lectureCount -}}
       {{- end -}}
-      <div class="group_year">
-        <div class="group_year__title">{{ .Params.year }}</div>
+      {{- $year_id := printf "%s-%v" $type_slug .Params.year -}}
+      <div class="group_year" id="{{ $year_id }}">
+        <div class="group_year__title"><a href="#{{ $year_id }}" class="group_year__anchor">{{ .Params.year }}</a></div>
         <div class="items">
           {{- partial "item.html" (dict
             "title" .Title

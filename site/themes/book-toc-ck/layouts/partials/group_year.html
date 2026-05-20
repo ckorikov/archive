@@ -1,5 +1,6 @@
-<div class="group_year">
-  <div class="group_year__title">{{ .year }}</div>
+{{- $year_id := cond (isset . "type_slug") (printf "%s-%v" .type_slug .year) (printf "%v" .year) -}}
+<div class="group_year" id="{{ $year_id }}">
+  <div class="group_year__title"><a href="#{{ $year_id }}" class="group_year__anchor">{{ .year }}</a></div>
   <div class="items">
     {{- range .items }}
       {{- partial "item.html" . -}}
