@@ -1,14 +1,19 @@
+{{- $cyr := "[\\x{0400}-\\x{04FF}]" -}}
 {{- if .is_course -}}
 {{/* Course item */}}
+{{- $title_lang := cond (findRE $cyr .title 1 | len | gt 1 | not) "ru" "" -}}
 <div class="item item--course">
-    <a href="/teaching/{{ .slug }}/" class="item__title">{{ .title }}</a>
+    <a href="/teaching/{{ .slug }}/" class="item__title"{{ with $title_lang }} lang="{{ . }}"{{ end }}>{{ .title }}</a>
     <br>
     <span class="item__meta">{{ with .school }}{{ . }}, {{ end }}{{ .year }}, {{ .lectures_count }} lectures</span>
 </div>
 {{- else -}}
 {{/* Regular publication item */}}
+{{- $title_lang := cond (findRE $cyr .title 1 | len | gt 1 | not) "ru" "" -}}
+{{- $authors_joined := delimit (.authors | default slice) ", " -}}
+{{- $authors_lang := cond (findRE $cyr $authors_joined 1 | len | gt 1 | not) "ru" "" -}}
 <div class="item">
-    <a href="{{ .url | default "#" }}" class="item__title">{{ .title }}</a>
+    <a href="{{ .url | default "#" }}" class="item__title"{{ with $title_lang }} lang="{{ . }}"{{ end }}>{{ .title }}</a>
     {{- with .arxiv_url }}<a href="{{ . }}" class="item__arxiv">arXiv</a>{{ end -}}
     {{- with .pdf }}<a href="{{ . }}" class="item__pdf">pdf</a>{{ end -}}
     {{- $hasDetails := or .authors .tags .meta -}}
@@ -16,7 +21,7 @@
     <br>
     {{ end -}}
     {{- with .authors }}
-    <span class="item__authors">{{ delimit . ", " }}</span>
+    <span class="item__authors"{{ with $authors_lang }} lang="{{ . }}"{{ end }}>{{ delimit . ", " }}</span>
     {{- end -}}
     {{- if and .authors (or .tags .meta) }}<span class="item__sep">—</span>{{ end -}}
     {{- with .meta }}

@@ -1,5 +1,5 @@
 baseURL = 'https://korikov.cc/'
-languageCode = 'en-us'
+languageCode = 'en'
 title = 'Archive'
 theme = 'book-toc-ck'
 buildFuture = true
