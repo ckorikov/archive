@@ -1,8 +1,7 @@
 site:
   author: "Constantine Korikov"
+  job_title: "Researcher and educator"
   bio: |-
-    Researcher and educator.
-
     {{< logo "huawei" "Huawei" >}}, {{< logo "mipt" "MIPT" >}},
     {{< logo "intel" "ex-Intel" >}}, {{< logo "syntacore" "ex-Syntacore" >}},
     {{< logo "healbe" "ex-Healbe" >}}, {{< logo "polytech" "ex-Polytech" >}}.

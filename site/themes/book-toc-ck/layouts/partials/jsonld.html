@@ -1,0 +1,46 @@
+{{- /*
+  JSON-LD structured data.
+  Always emits Person (with sameAs from About page contacts).
+  Adds WebSite on the home page.
+*/ -}}
+{{- $author := site.Params.author | default site.Title -}}
+{{- $contacts := dict -}}
+{{- $jobTitle := "" -}}
+{{- with site.GetPage "/about" -}}
+{{- with .Params.contacts }}{{ $contacts = . }}{{ end -}}
+{{- with .Params.job_title }}{{ $jobTitle = . }}{{ end -}}
+{{- end -}}
+{{- $sameAs := slice -}}
+{{- with index $contacts "github" -}}
+{{- $sameAs = $sameAs | append (printf "https://github.com/%s" .) -}}
+{{- end -}}
+{{- with index $contacts "scholar" -}}
+{{- $sameAs = $sameAs | append (printf "https://scholar.google.com/citations?user=%s" .) -}}
+{{- end -}}
+{{- with index $contacts "orcid" -}}
+{{- $sameAs = $sameAs | append (printf "https://orcid.org/%s" .) -}}
+{{- end -}}
+{{- with index $contacts "linkedin" -}}
+{{- $sameAs = $sameAs | append (printf "https://linkedin.com/in/%s" .) -}}
+{{- end -}}
+{{- $person := dict
+"@type" "Person"
+"name" $author
+"url" site.BaseURL
+-}}
+{{- with $jobTitle }}{{ $person = merge $person (dict "jobTitle" .) }}{{ end -}}
+{{- if $sameAs }}{{ $person = merge $person (dict "sameAs" $sameAs) }}{{ end -}}
+{{- $graph := slice $person -}}
+{{- if .IsHome -}}
+{{- $website := dict
+"@type" "WebSite"
+"url" site.BaseURL
+"name" site.Title
+"description" site.Params.description
+"author" (dict "@type" "Person" "name" $author)
+-}}
+{{- $graph = $graph | append $website -}}
+{{- end -}}
+<script type="application/ld+json">
+{{ jsonify (dict "indent" "  ") (dict "@context" "https://schema.org" "@graph" $graph) | safeJS }}
+</script>

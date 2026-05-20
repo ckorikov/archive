@@ -5,6 +5,7 @@ import logging
 import tomllib
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import click
 import yaml
@@ -461,11 +462,13 @@ def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     if config.site.contacts:
         contacts = config.site.contacts.model_dump(exclude_none=True)
 
-    data = {
+    data: dict[str, Any] = {
         "title": "About",
         "type": "about",
         "contacts": contacts,
     }
+    if config.site.job_title:
+        data["job_title"] = config.site.job_title
     bio = config.site.bio or ""
     write_frontmatter(about_path, data, content=bio)
     log.info("Generated about/_index.md")

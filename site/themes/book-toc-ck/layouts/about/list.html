@@ -1,6 +1,9 @@
 {{ define "main" }}
 <div class="about">
     <h1 class="page-title">{{ .Title }}</h1>
+    {{- with .Params.job_title }}
+    <p class="about__job-title">{{ . }}.</p>
+    {{- end }}
     <div class="about__bio">{{- .Content }}</div>
     {{- with .Params.contacts }}
     {{- $contacts := . }}
@@ -8,9 +11,17 @@
         {{- range site.Data.contact_icons }}
         {{- $icon := . }}
         {{- with index $contacts $icon.key }}
-        <a class="about__contact" href="{{ printf $icon.href . }}"
-           {{- if ne $icon.key "email" }} target="_blank" rel="noopener"{{ end }}>
-            <svg class="about__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <a class="about__contact"
+           href="{{ printf $icon.href . }}"
+           {{- if ne $icon.key "email" }}
+           target="_blank"
+           rel="noopener"
+           {{ end }}>
+            <svg class="about__icon"
+                 xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 fill="currentColor"
+                 aria-hidden="true">
                 <path d="{{ $icon.path }}" />
             </svg>
             {{ $icon.label }}

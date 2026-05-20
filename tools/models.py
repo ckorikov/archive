@@ -209,6 +209,7 @@ class SiteConfig(BaseModel):
     """Site configuration."""
 
     author: str
+    job_title: str | None = None
     bio: str | None = None
     contacts: Contacts | None = None
 

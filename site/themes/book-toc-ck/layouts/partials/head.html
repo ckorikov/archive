@@ -79,6 +79,8 @@
       as="font"
       type="font/woff2"
       crossorigin>
+{{/* JSON-LD */}}
+{{- partial "jsonld.html" . }}
 {{/* Main CSS (fonts + styles bundled) */}}
 {{- $fonts := resources.Get "css/fonts.css" -}}
 {{- $main := resources.Get "css/main.css" -}}
