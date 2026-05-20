@@ -28,6 +28,35 @@ log = logging.getLogger(__name__)
 DEFAULT_DATE = date(1990, 3, 25)
 
 
+def strip_shortcodes(text: str) -> str:
+    """Replace Hugo shortcodes like {{< logo "k" "Label" >}} with their label.
+
+    Treats the last quoted argument as the human-readable label. Used to
+    sanitize bio text destined for plain-text outputs (llms.txt, ai.txt).
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(text):
+        start = text.find("{{<", i)
+        if start < 0:
+            out.append(text[i:])
+            break
+        out.append(text[i:start])
+        end = text.find(">}}", start)
+        if end < 0:
+            out.append(text[start:])
+            break
+        parts = text[start + 3 : end].split('"')
+        out.append(parts[-2] if len(parts) >= 3 else "")
+        i = end + 3
+    return "".join(out)
+
+
+def quote_block(text: str) -> str:
+    """Prefix every line with '> ' for a markdown blockquote."""
+    return "\n".join(f"> {line}" if line else ">" for line in text.splitlines())
+
+
 def latest_pub_date(publications: list[Publication]) -> date:
     """Return date of the most recent publication."""
     if not publications:
@@ -470,7 +499,7 @@ def build_llms_txt(
     base_url: str,
 ) -> str:
     """Build llms.txt content for LLM crawlers."""
-    bio = config.site.bio or ""
+    bio = strip_shortcodes(config.site.bio or "")
 
     research = sorted(
         [p for p in publications if not p.course and p.pub_type in RESEARCH_TYPES],
@@ -481,7 +510,7 @@ def build_llms_txt(
     lines = [
         f"# {config.site.author} — Archive",
         "",
-        f"> {bio}",
+        quote_block(bio),
         f"> {stats['papers']} papers, {stats['courses']} courses, {stats['year_start']}–{stats['year_end']}.",
         "",
         "## Pages",
