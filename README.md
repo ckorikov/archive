@@ -5,16 +5,6 @@ Content is generated from a Zotero library; the repository holds only the pipeli
 
 ## Pipeline
 
-```mermaid
-flowchart LR
-    Z[Zotero API] --> F[fetch.py]
-    F --> V[validate.py]
-    V --> G[generate.py]
-    G --> H[Hugo]
-    H --> P[GitHub Pages]
-    P --> C[Cloudflare]
-```
-
 - **fetch** — pull items from the Zotero API into `site/static/data/publications.json`
 - **validate** — check the data against the Pydantic schema + editorial rules
 - **generate** — render Hugo content (`site/content/`) from `publications.json` + `archive.yaml`
