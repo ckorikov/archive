@@ -1,10 +1,50 @@
 """Pydantic models and utilities for archive-tools."""
 
+import re
+import unicodedata
 from datetime import date
 from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# BGN/PCGN-style romanization: matches how names appear in publications
+# ("Юрий" -> "yuriy", not "jurij").
+CYRILLIC_TO_LATIN: dict[str, str] = {
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "e",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "kh",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "shch",
+    "ъ": "",
+    "ы": "y",
+    "ь": "",
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
+}
 
 
 class PublicationType(StrEnum):
@@ -282,21 +322,14 @@ class PublicationsData(BaseModel):
 
 
 def slugify(text: str) -> str:
-    """Convert text to ASCII URL-safe slug with transliteration."""
-    import contextlib
-    import re
-
-    from transliterate import translit
-    from transliterate.exceptions import LanguageDetectionError
-
-    text = text.lower().strip()
-
-    with contextlib.suppress(LanguageDetectionError):
-        text = translit(text, reversed=True)
-
-    text = re.sub(r"[^a-z0-9\s-]", "", text)
-    text = re.sub(r"[\s_]+", "-", text)
-    return re.sub(r"-+", "-", text).strip("-")
+    """Convert text to ASCII URL-safe slug with Cyrillic transliteration."""
+    # macOS stores filenames in NFD; without NFC 'й' is 'и' + combining mark
+    text = unicodedata.normalize("NFC", text).lower()
+    chars = [
+        CYRILLIC_TO_LATIN[ch] if ch in CYRILLIC_TO_LATIN else (ch if ch.isascii() and ch.isalnum() else "-")
+        for ch in text
+    ]
+    return re.sub(r"-+", "-", "".join(chars)).strip("-")
 
 
 def get_project_root() -> Path:
