@@ -65,10 +65,33 @@ def latest_pub_date(publications: list[Publication]) -> date:
     return max(p.pub_date for p in publications)
 
 
+def taxonomy_tags(config: ArchiveConfig) -> dict[str, str]:
+    """Map casefolded group tag -> canonical spelling. The curated taxonomy."""
+    return {config.normalize(t).casefold(): config.normalize(t) for g in config.groups for t in g.tags}
+
+
+def curate_tags(tags: list[str], config: ArchiveConfig) -> list[str]:
+    """Keep only tags in the curated taxonomy, deduped case-insensitively.
+
+    Drops raw Zotero keyword noise (e.g. 'Casimir force', 'Drude model'),
+    keeping curated group tags and collapsing case variants (casimir / Casimir).
+    """
+    taxonomy = taxonomy_tags(config)
+    seen: set[str] = set()
+    result: list[str] = []
+    for t in config.normalize_list(tags):
+        key = t.casefold()
+        canonical = taxonomy.get(key)
+        if canonical and key not in seen:
+            seen.add(key)
+            result.append(canonical)
+    return result
+
+
 def pub_to_item(pub: Publication, config: ArchiveConfig) -> dict:
     """Convert publication to item dict for frontmatter."""
     authors = [config.normalize(str(a)) for a in pub.authors if str(a)]
-    tags = config.normalize_list(pub.tags)
+    tags = curate_tags(pub.tags, config)
     item = {
         "title": pub.title,
         "url": pub.url or "",

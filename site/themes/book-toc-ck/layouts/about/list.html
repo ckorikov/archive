@@ -8,7 +8,7 @@
     {{- with .Params.contacts }}
     {{- $contacts := . }}
     <div class="about__contacts">
-        {{- range site.Data.contact_icons }}
+        {{- range hugo.Data.contact_icons }}
         {{- $icon := . }}
         {{- with index $contacts $icon.key }}
         <a class="about__contact"

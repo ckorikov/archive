@@ -1,5 +1,5 @@
 baseURL = 'https://korikov.cc/'
-languageCode = 'en'
+locale = 'en'
 title = 'Archive'
 theme = 'book-toc-ck'
 buildFuture = true
@@ -10,7 +10,6 @@ enableRobotsTxt = true
   author = "Constantine Korikov"
   header_label = "Archive"
   description = "Scientific publications and teaching materials by Constantine Korikov"
-  keywords = "Constantine, Korikov, archive, publications, teaching"
 
 [params.verification]
   yandex = "0a551e133431e226"

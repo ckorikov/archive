@@ -1,6 +1,23 @@
 """Unit tests for generate.py helpers."""
 
-from generate import quote_block, strip_shortcodes
+from generate import (
+    curate_tags,
+    pub_to_item,
+    quote_block,
+    strip_shortcodes,
+)
+from models import ArchiveConfig, Group, Publication, SiteConfig
+
+
+def make_config(
+    groups: list[Group] | None = None,
+    aliases: dict[str, list[str]] | None = None,
+) -> ArchiveConfig:
+    return ArchiveConfig(
+        site=SiteConfig(author="Owner"),
+        groups=groups or [],
+        aliases=aliases or {},
+    )
 
 
 class TestStripShortcodes:
@@ -44,3 +61,35 @@ class TestQuoteBlock:
 
     def test_empty_string(self) -> None:
         assert quote_block("") == ""
+
+
+class TestCurateTags:
+    def test_keeps_only_taxonomy_tags(self) -> None:
+        config = make_config([Group(name="Research", tags=["casimir", "ai"])])
+        tags = ["Casimir force", "Drude model", "casimir", "ai"]
+        assert curate_tags(tags, config) == ["casimir", "ai"]
+
+    def test_dedup_case_insensitive(self) -> None:
+        config = make_config([Group(name="Research", tags=["casimir"])])
+        assert curate_tags(["casimir", "Casimir", "CASIMIR"], config) == ["casimir"]
+
+    def test_canonical_spelling_from_taxonomy(self) -> None:
+        config = make_config([Group(name="Research", tags=["Casimir"])])
+        assert curate_tags(["casimir"], config) == ["Casimir"]
+
+    def test_empty_when_no_match(self) -> None:
+        config = make_config([Group(name="Research", tags=["ai"])])
+        assert curate_tags(["physics", "optics"], config) == []
+
+
+class TestPubToItem:
+    def test_tags_curated(self) -> None:
+        config = make_config(groups=[Group(name="Research", tags=["casimir"])])
+        pub = Publication(
+            id="X",
+            type="journalArticle",
+            year=2024,
+            title="T",
+            tags=["Casimir force", "casimir", "noise"],
+        )
+        assert pub_to_item(pub, config)["tags"] == ["casimir"]

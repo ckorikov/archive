@@ -12,8 +12,8 @@
   --c-paper: #f5f3ee;
   --c-ink: #2c2925;
   --c-ink-medium: #6b6560;
-  --c-ink-light: #a09890;
-  --c-ink-faint: #ccc8c0;
+  --c-ink-light: #756b62;
+  --c-ink-faint: #776d63;
   --c-accent: #6b1c00;
   --c-pdf: #2d6a4f;
 
@@ -126,12 +126,13 @@ a {
 }
 
 .nav__item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: fit-content;
+  min-height: 40px;
   font-size: var(--text-sm);
   font-weight: 400;
-  color: var(--c-ink-light);
-  padding: var(--space-xs) 0;
+  color: var(--c-ink-medium);
   transition: var(--transition-color);
 }
 
@@ -140,8 +141,10 @@ a {
 }
 
 .nav__item.is-active {
-  color: var(--c-ink);
-  font-style: italic;
+  color: var(--c-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 /* ==========================================================================
@@ -254,12 +257,17 @@ a {
 }
 
 .item {
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
 }
 
 .item__title {
   font-weight: 400;
   transition: var(--transition-color);
+}
+
+/* Visited titles dim slightly so the list reads like a checklist */
+.item__title:visited {
+  color: var(--c-ink-medium);
 }
 
 .item__title:hover {
