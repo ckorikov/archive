@@ -101,9 +101,9 @@ class Author(BaseModel):
 
 
 class Artifact(BaseModel):
-    """A linked resource of one event: slides, video, etc."""
+    """An external link merged from a related item: arxiv, slides, video."""
 
-    kind: str  # "slides" | "video"
+    kind: str  # "arxiv" | "slides" | "video"
     url: str
 
 
@@ -121,7 +121,6 @@ class Publication(BaseModel):
     authors: list[Author] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     url: str | None = None
-    arxiv_url: str | None = None
     pdf: str | None = None  # Local PDF path (for archive)
     language: str = "english"
     course: str | None = Field(default=None, alias="series")
@@ -129,7 +128,7 @@ class Publication(BaseModel):
     section: str | None = None
     presentation_type: str | None = Field(default=None, alias="presentationType")
     license: str | None = None  # Software only
-    # Slides+video of one event (see merge_event_artifacts).
+    # External links merged from related Zotero items: arxiv, slides, video.
     artifacts: list[Artifact] = Field(default_factory=list)
 
     @property

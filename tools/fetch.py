@@ -6,7 +6,6 @@ import os
 import re
 import threading
 import time
-from collections import defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -48,12 +47,12 @@ class ZoteroFetcherConfig:
 SKIP_TYPES = {"attachment", "note"}
 # Creator roles folded into authors — all answer "who made it".
 AUTHOR_TYPES = {"author", "presenter", "director", "programmer", "contributor", None}
-PREPRINT_TYPES = {"preprint"}
 PRIMARY_TYPES = {"journalArticle", "conferencePaper", "report"}
 SOFTWARE_TYPE = "computerProgram"
-# Zotero itemType -> artifact kind, ordered by display priority (slides first).
+# Zotero itemType -> artifact kind for a preprint merged into its published version.
+PREPRINT_KINDS = {"preprint": "arxiv"}
+# Zotero itemType -> artifact kind for the two halves of one event.
 EVENT_KINDS = {"presentation": "slides", "videoRecording": "video"}
-KIND_ORDER = {kind: i for i, kind in enumerate(EVENT_KINDS.values())}
 
 DATE_FORMATS = [
     ("%Y/%m/%d", lambda dt: (dt.year, dt.month, dt.day)),
@@ -107,18 +106,20 @@ def extract_related_keys(data: dict[str, Any]) -> list[str]:
     return [m.group(1) for m in matches if m]
 
 
-def merge_preprints(
+def _merge_related(
     publications: list[Publication],
     relations: dict[str, list[str]],
+    fold: Callable[[Publication, Publication], str | None],
+    label: str,
 ) -> list[Publication]:
-    """Merge preprint+journal pairs: copy arXiv URL to primary, drop preprint.
+    """Walk Related Item pairs; `fold` collapses a pair and returns the id to drop.
 
-    Uses Zotero Related Items to detect pairs. Handles both directions
-    (preprint→journal and journal→preprint).
+    `fold(pub, related)` applies its policy (which is primary, what to copy) and
+    returns the secondary's id, or None if the pair doesn't apply. Already-dropped
+    records are skipped, so bidirectional relations collapse once.
     """
     by_key = {p.id: p for p in publications}
     to_remove: set[str] = set()
-
     for pub in publications:
         if pub.id in to_remove:
             continue
@@ -126,97 +127,54 @@ def merge_preprints(
             related = by_key.get(related_key)
             if related is None or related.id in to_remove:
                 continue
-
-            if pub.type in PREPRINT_TYPES and related.type in PRIMARY_TYPES:
-                preprint, primary = pub, related
-            elif related.type in PREPRINT_TYPES and pub.type in PRIMARY_TYPES:
-                preprint, primary = related, pub
-            else:
-                continue
-
-            if primary.arxiv_url is None:
-                primary.arxiv_url = preprint.url
-            to_remove.add(preprint.id)
-
-    merged = [p for p in publications if p.id not in to_remove]
+            dropped = fold(pub, related)
+            if dropped:
+                to_remove.add(dropped)
     if to_remove:
-        log.info(f"Merged {len(to_remove)} preprint(s) into primary publications")
-    return merged
+        log.info(f"Merged {len(to_remove)} {label}")
+    return [p for p in publications if p.id not in to_remove]
 
 
-def _undirected_graph(relations: dict[str, list[str]]) -> dict[str, set[str]]:
-    """Build a symmetric adjacency map from Zotero's directed relations."""
-    adj: dict[str, set[str]] = defaultdict(set)
-    for key, related in relations.items():
-        for other in related:
-            adj[key].add(other)
-            adj[other].add(key)
-    return adj
-
-
-def _event_component(
-    start: str,
-    adj: dict[str, set[str]],
-    by_key: dict[str, Publication],
+def merge_preprints(
+    publications: list[Publication],
+    relations: dict[str, list[str]],
 ) -> list[Publication]:
-    """Connected component reachable through event-type items only.
+    """Add a preprint's arXiv link to its published version, then drop the preprint."""
 
-    Traversal stops at non-event nodes (they are neither collected nor
-    expanded), so unrelated clusters cannot bridge through, say, a paper.
-    """
-    seen: set[str] = set()
-    stack = [start]
-    component: list[Publication] = []
-    while stack:
-        cur = stack.pop()
-        if cur in seen:
-            continue
-        seen.add(cur)
-        pub = by_key.get(cur)
-        if pub is None or pub.type not in EVENT_KINDS:
-            continue
-        component.append(pub)
-        stack.extend(adj.get(cur, ()))
-    return component
+    def fold(pub: Publication, related: Publication) -> str | None:
+        if pub.type in PREPRINT_KINDS and related.type in PRIMARY_TYPES:
+            preprint, primary = pub, related
+        elif related.type in PREPRINT_KINDS and pub.type in PRIMARY_TYPES:
+            preprint, primary = related, pub
+        else:
+            return None
+        kind = PREPRINT_KINDS[preprint.type]
+        if preprint.url and not any(a.kind == kind for a in primary.artifacts):
+            primary.artifacts.append(Artifact(kind=kind, url=preprint.url))
+        return preprint.id
+
+    return _merge_related(publications, relations, fold, "preprint(s) into published versions")
 
 
 def merge_event_artifacts(
     publications: list[Publication],
     relations: dict[str, list[str]],
 ) -> list[Publication]:
-    """Collapse linked slides+video of one event into a single card.
+    """Collapse a linked presentation+video into one card; drop the video.
 
-    Like merge_preprints, pairs come from Zotero Related Items (symmetric and
-    transitive). Unlike preprints, the secondary record's link is kept: the
-    primary (the presentation) gains an `artifacts` list with each member's
-    kind and URL, and the others are dropped. Roles come from itemType, since
-    the relation itself carries no type.
+    The presentation becomes the card and keeps both links as `artifacts`
+    (slides, video) — unlike a preprint, the secondary link is not lost.
     """
-    adj = _undirected_graph(relations)
-    by_key = {p.id: p for p in publications}
-    to_remove: set[str] = set()
-    visited: set[str] = set()
 
-    for pub in publications:
-        if pub.id in visited or pub.type not in EVENT_KINDS:
-            continue
-        component = _event_component(pub.id, adj, by_key)
-        visited |= {p.id for p in component}
-        # Both types required — leaves slides-only lecture runs untouched.
-        if {p.type for p in component} != set(EVENT_KINDS):
-            continue
-        # slides sort first, so ordered[0] is the presentation (surviving card).
-        ordered = sorted(
-            component,
-            key=lambda p: (KIND_ORDER[EVENT_KINDS[p.type]], *p.date_sort_key, p.title),
-        )
-        primary = ordered[0]
-        primary.artifacts = [Artifact(kind=EVENT_KINDS[p.type], url=p.url) for p in ordered if p.url]
-        to_remove |= {p.id for p in ordered[1:]}
+    def fold(pub: Publication, related: Publication) -> str | None:
+        types = {pub.type, related.type}
+        if types != set(EVENT_KINDS):
+            return None
+        slides, video = (pub, related) if pub.type == "presentation" else (related, pub)
+        slides.artifacts = [Artifact(kind=EVENT_KINDS[p.type], url=p.url) for p in (slides, video) if p.url]
+        return video.id
 
-    if to_remove:
-        log.info(f"Merged {len(to_remove)} event artifact(s) into presentation cards")
-    return [p for p in publications if p.id not in to_remove]
+    return _merge_related(publications, relations, fold, "event video(s) into presentation cards")
 
 
 def parse_item(data: dict[str, Any]) -> Publication | None:
@@ -321,8 +279,8 @@ def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
 def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
     """Parse Zotero items into Publications, filtering invalid ones.
 
-    Preprints related to journal articles via Zotero Related Items are merged:
-    the arXiv URL is copied to the primary publication and the preprint is dropped.
+    Related items are merged into a primary record's `artifacts` list: a
+    preprint contributes its arXiv link, a video its recording link.
     """
     publications = []
     relations: dict[str, list[str]] = {}

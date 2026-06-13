@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
 # URL-bearing fields scanned for editorial issues.
-URL_FIELDS = ("url", "arxiv_url", "pdf")
+URL_FIELDS = ("url", "pdf")
 FORBIDDEN_URL_HOST = "dropbox.com"
 MAX_TITLE_LEN = 60
 MAX_AUTHORS = 3
@@ -50,13 +50,14 @@ def check_url_present(pub: Publication) -> list[str]:
 
 
 def check_no_dropbox(pub: Publication) -> list[str]:
-    """WARN if any URL field points at Dropbox — PDFs should live locally."""
-    errors = []
-    for field in URL_FIELDS:
-        value = getattr(pub, field) or ""
-        if FORBIDDEN_URL_HOST in value:
-            errors.append(f"{describe(pub)}: {field} points at {FORBIDDEN_URL_HOST} ({value})")
-    return errors
+    """WARN if any URL points at Dropbox — PDFs should live locally."""
+    sources = [(field, getattr(pub, field) or "") for field in URL_FIELDS]
+    sources += [(a.kind, a.url) for a in pub.artifacts]
+    return [
+        f"{describe(pub)}: {name} points at {FORBIDDEN_URL_HOST} ({value})"
+        for name, value in sources
+        if FORBIDDEN_URL_HOST in value
+    ]
 
 
 def check_authors(pub: Publication) -> list[str]:

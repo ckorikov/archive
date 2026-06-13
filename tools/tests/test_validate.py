@@ -1,6 +1,14 @@
 """Unit tests for editorial rules in validate.py."""
 
-from models import ArchiveConfig, Author, Group, Publication, PublicationsData, SiteConfig
+from models import (
+    ArchiveConfig,
+    Artifact,
+    Author,
+    Group,
+    Publication,
+    PublicationsData,
+    SiteConfig,
+)
 from validate import (
     check_authors,
     check_editorial,
@@ -13,10 +21,10 @@ from validate import (
 def make_pub(
     key: str = "K1",
     url: str | None = "https://example.com",
-    arxiv_url: str | None = None,
     pdf: str | None = None,
     authors: list[Author] | None = None,
     tags: list[str] | None = None,
+    artifacts: list[Artifact] | None = None,
 ) -> Publication:
     return Publication(
         id=key,
@@ -24,10 +32,10 @@ def make_pub(
         year=2024,
         title=f"Title {key}",
         url=url,
-        arxiv_url=arxiv_url,
         pdf=pdf,
         authors=authors if authors is not None else [Author(firstName="A", lastName="B")],
         tags=tags or [],
+        artifacts=artifacts or [],
     )
 
 
@@ -62,8 +70,9 @@ class TestCheckNoDropbox:
     def test_dropbox_in_pdf_fails(self) -> None:
         assert check_no_dropbox(make_pub(pdf="https://dropbox.com/x.pdf"))
 
-    def test_dropbox_in_arxiv_fails(self) -> None:
-        assert check_no_dropbox(make_pub(arxiv_url="https://dropbox.com/x"))
+    def test_dropbox_in_artifact_fails(self) -> None:
+        art = [Artifact(kind="arxiv", url="https://dropbox.com/x")]
+        assert check_no_dropbox(make_pub(artifacts=art))
 
 
 class TestCheckAuthors:

@@ -17,49 +17,35 @@
 {{- $authors := .authors | default slice -}}
 {{- $authors_lang := cond (findRE $cyr (delimit $authors ", ") 1 | len | gt 1 | not) "ru" "" -}}
 <div class="item">
-    {{- $artifacts := .artifacts | default slice -}}
-    {{- if $artifacts -}}
-{{/* Event card: title links to the priority artifact (slides) */}}
-{{- $primary := index $artifacts 0 -}}
-<a href="{{ $primary.url }}"
-   class="item__title"
-   {{ with $title_lang }}
-   lang="{{ . }}"
-   {{ end }}
+    <a href="{{ .url | default "#" }}"
+       class="item__title"
+       {{ with $title_lang }}
+       lang="{{ . }}"
+       {{ end }}
+       {{- if hasPrefix (.url | default "") "http" }}
+       target="_blank"
+       rel="noopener"
+       {{ end }}>{{ .title }}</a>
+    {{- range .artifacts }}{{- $isArxiv := eq .kind "arxiv" -}}<a href="{{ .url }}"
+   class="{{ cond $isArxiv "item__arxiv" "item__artifact" }}"
    target="_blank"
-   rel="noopener">{{ .title }}</a>
-{{- else -}}
-<a href="{{ .url | default "#" }}"
-   class="item__title"
-   {{ with $title_lang }}
-   lang="{{ . }}"
-   {{ end }}
-   {{- if hasPrefix (.url | default "") "http" }}
-   target="_blank"
-   rel="noopener"
-   {{ end }}>{{ .title }}</a>
-{{- end -}}
-{{- with .arxiv_url }}<a href="{{ . }}" class="item__arxiv" target="_blank" rel="noopener">arXiv</a>{{ end -}}
-{{- with .pdf }}<a href="{{ . }}"
+   rel="noopener">{{ cond $isArxiv "arXiv" .kind }}</a>{{ end -}}
+    {{- with .pdf }}<a href="{{ . }}"
    class="item__pdf"
    {{ if hasPrefix . "http" }}
    target="_blank"
    rel="noopener"
    {{ end }}>pdf</a>{{ end -}}
-{{- range $artifacts }}<a href="{{ .url }}"
-   class="item__artifact"
-   target="_blank"
-   rel="noopener">{{ .kind }}</a>{{ end -}}
-{{- $segs := slice -}}
-{{- with $authors }}
-{{- $langAttr := cond (ne $authors_lang "") (printf ` lang="%s"` $authors_lang) "" -}}
-{{- $segs = $segs | append (printf `<span class="item__authors"%s>%s</span>` $langAttr (delimit . ", " | htmlEscape)) -}}
-{{- end -}}
-{{- with .meta }}{{ $segs = $segs | append (printf `<span class="item__meta">%s</span>` (. | htmlEscape)) }}{{ end -}}
-{{- with .license }}{{ $segs = $segs | append (printf `<span class="item__license">%s</span>` (. | htmlEscape)) }}{{ end -}}
-{{- with .tags }}{{ $segs = $segs | append (printf `<span class="item__tags">%s</span>` (delimit . ", " | htmlEscape)) }}{{ end -}}
-{{- with $segs }}
-<br>
-{{ delimit . `<span class="item__sep">—</span>` | safeHTML }}{{ end -}}
+    {{- $segs := slice -}}
+    {{- with $authors }}
+    {{- $langAttr := cond (ne $authors_lang "") (printf ` lang="%s"` $authors_lang) "" -}}
+    {{- $segs = $segs | append (printf `<span class="item__authors"%s>%s</span>` $langAttr (delimit . ", " | htmlEscape)) -}}
+    {{- end -}}
+    {{- with .meta }}{{ $segs = $segs | append (printf `<span class="item__meta">%s</span>` (. | htmlEscape)) }}{{ end -}}
+    {{- with .license }}{{ $segs = $segs | append (printf `<span class="item__license">%s</span>` (. | htmlEscape)) }}{{ end -}}
+    {{- with .tags }}{{ $segs = $segs | append (printf `<span class="item__tags">%s</span>` (delimit . ", " | htmlEscape)) }}{{ end -}}
+    {{- with $segs }}
+    <br>
+    {{ delimit . `<span class="item__sep">—</span>` | safeHTML }}{{ end -}}
 </div>
 {{- end -}}

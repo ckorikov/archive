@@ -6,7 +6,7 @@ from fetch import (
     merge_preprints,
     parse_item,
 )
-from models import Publication
+from models import Artifact, Publication
 
 
 class TestParseItemCreators:
@@ -55,6 +55,10 @@ def make_pub(key: str, pub_type: str, url: str | None = None) -> Publication:
     return Publication(id=key, type=pub_type, year=2024, title=f"Title {key}", url=url)
 
 
+def arxiv_of(pub: Publication) -> str | None:
+    return next((a.url for a in pub.artifacts if a.kind == "arxiv"), None)
+
+
 class TestExtractRelatedKeys:
     def test_empty_relations(self) -> None:
         assert extract_related_keys({}) == []
@@ -101,7 +105,7 @@ class TestMergePreprints:
 
         assert len(result) == 1
         assert result[0].id == "J1"
-        assert result[0].arxiv_url == "https://arxiv.org/abs/2301.00001"
+        assert arxiv_of(result[0]) == "https://arxiv.org/abs/2301.00001"
 
     def test_relation_from_journal_side(self) -> None:
         """Works even if only the journal has the relation (not the preprint)."""
@@ -112,7 +116,7 @@ class TestMergePreprints:
         result = merge_preprints([journal, preprint], relations)
 
         assert len(result) == 1
-        assert result[0].arxiv_url == "https://arxiv.org/abs/2301.00001"
+        assert arxiv_of(result[0]) == "https://arxiv.org/abs/2301.00001"
 
     def test_bidirectional_not_double_processed(self) -> None:
         """Zotero creates bidirectional relations; preprint must appear once."""
@@ -123,7 +127,7 @@ class TestMergePreprints:
         result = merge_preprints([journal, preprint], relations)
 
         assert len(result) == 1
-        assert result[0].arxiv_url == "https://arxiv.org/abs/2301.00001"
+        assert arxiv_of(result[0]) == "https://arxiv.org/abs/2301.00001"
 
     def test_preprint_without_url_skips_arxiv_url(self) -> None:
         journal = make_pub("J1", "journalArticle")
@@ -133,7 +137,7 @@ class TestMergePreprints:
         result = merge_preprints([journal, preprint], relations)
 
         assert len(result) == 1
-        assert result[0].arxiv_url is None
+        assert arxiv_of(result[0]) is None
 
     def test_two_unrelated_preprints_kept(self) -> None:
         pubs = [
@@ -152,17 +156,17 @@ class TestMergePreprints:
 
         assert len(result) == 1
         assert result[0].id == "C1"
-        assert result[0].arxiv_url == "https://arxiv.org/abs/2301.00001"
+        assert arxiv_of(result[0]) == "https://arxiv.org/abs/2301.00001"
 
     def test_existing_arxiv_url_not_overwritten(self) -> None:
         journal = make_pub("J1", "journalArticle")
-        journal.arxiv_url = "https://arxiv.org/abs/existing"
+        journal.artifacts = [Artifact(kind="arxiv", url="https://arxiv.org/abs/existing")]
         preprint = make_pub("P1", "preprint", "https://arxiv.org/abs/new")
         relations = {"P1": ["J1"]}
 
         result = merge_preprints([journal, preprint], relations)
 
-        assert result[0].arxiv_url == "https://arxiv.org/abs/existing"
+        assert arxiv_of(result[0]) == "https://arxiv.org/abs/existing"
 
 
 class TestMergeEventArtifacts:

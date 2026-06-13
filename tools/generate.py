@@ -100,8 +100,6 @@ def pub_to_item(pub: Publication, config: ArchiveConfig) -> dict:
     }
     if pub.license:
         item["license"] = pub.license
-    if pub.arxiv_url:
-        item["arxiv_url"] = pub.arxiv_url
     if pub.pdf:
         item["pdf"] = pub.pdf
     if pub.artifacts:
