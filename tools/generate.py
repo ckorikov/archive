@@ -104,6 +104,8 @@ def pub_to_item(pub: Publication, config: ArchiveConfig) -> dict:
         item["arxiv_url"] = pub.arxiv_url
     if pub.pdf:
         item["pdf"] = pub.pdf
+    if pub.artifacts:
+        item["artifacts"] = [{"kind": a.kind, "url": a.url} for a in pub.artifacts]
     return item
 
 

@@ -1,6 +1,11 @@
-"""Unit tests for fetch.py: extract_related_keys and merge_preprints."""
+"""Unit tests for fetch.py: extract_related_keys and merges."""
 
-from fetch import extract_related_keys, merge_preprints, parse_item
+from fetch import (
+    extract_related_keys,
+    merge_event_artifacts,
+    merge_preprints,
+    parse_item,
+)
 from models import Publication
 
 
@@ -158,3 +163,64 @@ class TestMergePreprints:
         result = merge_preprints([journal, preprint], relations)
 
         assert result[0].arxiv_url == "https://arxiv.org/abs/existing"
+
+
+class TestMergeEventArtifacts:
+    def test_slides_video_collapsed(self) -> None:
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        video = make_pub("V1", "videoRecording", "https://youtu.be/abc")
+        relations = {"V1": ["S1"]}
+
+        result = merge_event_artifacts([slides, video], relations)
+
+        assert len(result) == 1
+        assert result[0].id == "S1"  # presentation is the surviving card
+        assert [(a.kind, a.url) for a in result[0].artifacts] == [
+            ("slides", "https://files/slides.pdf"),
+            ("video", "https://youtu.be/abc"),  # video link preserved, not dropped
+        ]
+
+    def test_relation_from_presentation_side(self) -> None:
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        video = make_pub("V1", "videoRecording", "https://youtu.be/abc")
+        result = merge_event_artifacts([slides, video], {"S1": ["V1"]})
+        assert len(result) == 1
+        assert {a.kind for a in result[0].artifacts} == {"slides", "video"}
+
+    def test_bidirectional_not_double_processed(self) -> None:
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        video = make_pub("V1", "videoRecording", "https://youtu.be/abc")
+        result = merge_event_artifacts([slides, video], {"S1": ["V1"], "V1": ["S1"]})
+        assert len(result) == 1
+        assert len(result[0].artifacts) == 2
+
+    def test_single_presentation_untouched(self) -> None:
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        result = merge_event_artifacts([slides], {})
+        assert len(result) == 1
+        assert result[0].artifacts == []
+
+    def test_unrelated_presentation_and_video_kept(self) -> None:
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        video = make_pub("V1", "videoRecording", "https://youtu.be/abc")
+        result = merge_event_artifacts([slides, video], {})  # no relation
+        assert len(result) == 2
+        assert all(p.artifacts == [] for p in result)
+
+    def test_two_linked_presentations_not_merged(self) -> None:
+        """A slides-only cluster (e.g. a lecture run) needs both types — skip."""
+        a = make_pub("A1", "presentation", "https://files/a.pdf")
+        b = make_pub("B1", "presentation", "https://files/b.pdf")
+        result = merge_event_artifacts([a, b], {"A1": ["B1"]})
+        assert len(result) == 2
+        assert all(p.artifacts == [] for p in result)
+
+    def test_does_not_bridge_through_non_event(self) -> None:
+        """presentation—paper—video must not collapse through the paper."""
+        slides = make_pub("S1", "presentation", "https://files/slides.pdf")
+        paper = make_pub("J1", "journalArticle")
+        video = make_pub("V1", "videoRecording", "https://youtu.be/abc")
+        relations = {"S1": ["J1"], "J1": ["S1", "V1"], "V1": ["J1"]}
+        result = merge_event_artifacts([slides, paper, video], relations)
+        assert len(result) == 3
+        assert all(p.artifacts == [] for p in result)

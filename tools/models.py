@@ -100,6 +100,13 @@ class Author(BaseModel):
         return self.last_name or self.first_name
 
 
+class Artifact(BaseModel):
+    """A linked resource of one event: slides, video, etc."""
+
+    kind: str  # "slides" | "video"
+    url: str
+
+
 class Publication(BaseModel):
     """Single publication from Zotero."""
 
@@ -122,6 +129,8 @@ class Publication(BaseModel):
     section: str | None = None
     presentation_type: str | None = Field(default=None, alias="presentationType")
     license: str | None = None  # Software only
+    # Slides+video of one event (see merge_event_artifacts).
+    artifacts: list[Artifact] = Field(default_factory=list)
 
     @property
     def pub_type(self) -> PublicationType | None:

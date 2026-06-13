@@ -6,6 +6,7 @@ import os
 import re
 import threading
 import time
+from collections import defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -16,7 +17,7 @@ from typing import Any
 import click
 from pyzotero import zotero
 
-from models import Author, Publication, PublicationsData, get_static_data_dir
+from models import Artifact, Author, Publication, PublicationsData, get_static_data_dir
 
 log = logging.getLogger(__name__)
 
@@ -45,12 +46,14 @@ class ZoteroFetcherConfig:
 
 
 SKIP_TYPES = {"attachment", "note"}
-# Creator roles shown as authors: presenter (presentations), director (video),
-# programmer/contributor (software). All answer "who made it".
+# Creator roles folded into authors — all answer "who made it".
 AUTHOR_TYPES = {"author", "presenter", "director", "programmer", "contributor", None}
 PREPRINT_TYPES = {"preprint"}
 PRIMARY_TYPES = {"journalArticle", "conferencePaper", "report"}
-SOFTWARE_TYPE = "computerProgram"  # carries a license field
+SOFTWARE_TYPE = "computerProgram"
+# Zotero itemType -> artifact kind, ordered by display priority (slides first).
+EVENT_KINDS = {"presentation": "slides", "videoRecording": "video"}
+KIND_ORDER = {kind: i for i, kind in enumerate(EVENT_KINDS.values())}
 
 DATE_FORMATS = [
     ("%Y/%m/%d", lambda dt: (dt.year, dt.month, dt.day)),
@@ -139,6 +142,81 @@ def merge_preprints(
     if to_remove:
         log.info(f"Merged {len(to_remove)} preprint(s) into primary publications")
     return merged
+
+
+def _undirected_graph(relations: dict[str, list[str]]) -> dict[str, set[str]]:
+    """Build a symmetric adjacency map from Zotero's directed relations."""
+    adj: dict[str, set[str]] = defaultdict(set)
+    for key, related in relations.items():
+        for other in related:
+            adj[key].add(other)
+            adj[other].add(key)
+    return adj
+
+
+def _event_component(
+    start: str,
+    adj: dict[str, set[str]],
+    by_key: dict[str, Publication],
+) -> list[Publication]:
+    """Connected component reachable through event-type items only.
+
+    Traversal stops at non-event nodes (they are neither collected nor
+    expanded), so unrelated clusters cannot bridge through, say, a paper.
+    """
+    seen: set[str] = set()
+    stack = [start]
+    component: list[Publication] = []
+    while stack:
+        cur = stack.pop()
+        if cur in seen:
+            continue
+        seen.add(cur)
+        pub = by_key.get(cur)
+        if pub is None or pub.type not in EVENT_KINDS:
+            continue
+        component.append(pub)
+        stack.extend(adj.get(cur, ()))
+    return component
+
+
+def merge_event_artifacts(
+    publications: list[Publication],
+    relations: dict[str, list[str]],
+) -> list[Publication]:
+    """Collapse linked slides+video of one event into a single card.
+
+    Like merge_preprints, pairs come from Zotero Related Items (symmetric and
+    transitive). Unlike preprints, the secondary record's link is kept: the
+    primary (the presentation) gains an `artifacts` list with each member's
+    kind and URL, and the others are dropped. Roles come from itemType, since
+    the relation itself carries no type.
+    """
+    adj = _undirected_graph(relations)
+    by_key = {p.id: p for p in publications}
+    to_remove: set[str] = set()
+    visited: set[str] = set()
+
+    for pub in publications:
+        if pub.id in visited or pub.type not in EVENT_KINDS:
+            continue
+        component = _event_component(pub.id, adj, by_key)
+        visited |= {p.id for p in component}
+        # Both types required — leaves slides-only lecture runs untouched.
+        if {p.type for p in component} != set(EVENT_KINDS):
+            continue
+        # slides sort first, so ordered[0] is the presentation (surviving card).
+        ordered = sorted(
+            component,
+            key=lambda p: (KIND_ORDER[EVENT_KINDS[p.type]], *p.date_sort_key, p.title),
+        )
+        primary = ordered[0]
+        primary.artifacts = [Artifact(kind=EVENT_KINDS[p.type], url=p.url) for p in ordered if p.url]
+        to_remove |= {p.id for p in ordered[1:]}
+
+    if to_remove:
+        log.info(f"Merged {len(to_remove)} event artifact(s) into presentation cards")
+    return [p for p in publications if p.id not in to_remove]
 
 
 def parse_item(data: dict[str, Any]) -> Publication | None:
@@ -275,7 +353,8 @@ def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
     if skipped_attachments or skipped_no_date:
         log.warning(f"Total skipped: {skipped_attachments} attachments, {skipped_no_date} no date")
 
-    return merge_preprints(publications, relations)
+    merged = merge_preprints(publications, relations)
+    return merge_event_artifacts(merged, relations)
 
 
 @click.command()

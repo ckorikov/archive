@@ -302,7 +302,8 @@ a {
   color: var(--c-accent);
 }
 
-.item__arxiv {
+.item__arxiv,
+.item__artifact {
   font-size: var(--text-xs);
   font-style: normal;
   color: var(--c-ink-medium);
@@ -310,7 +311,8 @@ a {
   transition: var(--transition-color);
 }
 
-.item__arxiv:hover {
+.item__arxiv:hover,
+.item__artifact:hover {
   color: var(--c-accent);
 }
 
