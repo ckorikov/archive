@@ -1,7 +1,49 @@
 """Unit tests for fetch.py: extract_related_keys and merge_preprints."""
 
-from fetch import extract_related_keys, merge_preprints
+from fetch import extract_related_keys, merge_preprints, parse_item
 from models import Publication
+
+
+class TestParseItemCreators:
+    def test_software_folds_creators_into_authors_with_license(self) -> None:
+        data = {
+            "key": "SW1",
+            "itemType": "computerProgram",
+            "date": "2026",
+            "title": "Sim8",
+            "rights": "MIT",
+            "creators": [
+                {"creatorType": "programmer", "firstName": "C", "lastName": "Korikov"},
+                {"creatorType": "contributor", "firstName": "A", "lastName": "Lovelace"},
+            ],
+        }
+        pub = parse_item(data)
+        assert [str(a) for a in pub.authors] == ["C Korikov", "A Lovelace"]
+        assert pub.license == "MIT"
+
+    def test_video_director_is_author(self) -> None:
+        data = {
+            "key": "V1",
+            "itemType": "videoRecording",
+            "date": "2024",
+            "title": "Talk",
+            "creators": [{"creatorType": "director", "firstName": "C", "lastName": "K"}],
+        }
+        pub = parse_item(data)
+        assert [str(a) for a in pub.authors] == ["C K"]
+
+    def test_non_software_has_no_license(self) -> None:
+        data = {
+            "key": "J1",
+            "itemType": "journalArticle",
+            "date": "2025",
+            "title": "Paper",
+            "rights": "CC-BY",
+            "creators": [{"creatorType": "author", "firstName": "C", "lastName": "K"}],
+        }
+        pub = parse_item(data)
+        assert type(pub) is Publication
+        assert pub.license is None
 
 
 def make_pub(key: str, pub_type: str, url: str | None = None) -> Publication:

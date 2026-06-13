@@ -277,7 +277,8 @@ a {
 .item__authors,
 .item__tags,
 .item__sep,
-.item__meta {
+.item__meta,
+.item__license {
   font-size: var(--text-sm);
   font-style: italic;
   color: var(--c-ink-light);

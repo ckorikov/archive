@@ -1,6 +1,6 @@
 {{- $l := . -}}
 <div class="lecture">
   {{- with $l.num }}<span class="lecture__num">{{ . }}</span>{{ end -}}
-  <a href="{{ $l.url | default "#" }}" class="lecture__title">{{ $l.title }}</a>
-  {{- with $l.pdf }}<a href="{{ . }}" class="lecture__pdf">pdf</a>{{ end -}}
+  <a href="{{ $l.url | default "#" }}" class="lecture__title"{{ if hasPrefix ($l.url | default "") "http" }} target="_blank" rel="noopener"{{ end }}>{{ $l.title }}</a>
+  {{- with $l.pdf }}<a href="{{ . }}" class="lecture__pdf"{{ if hasPrefix . "http" }} target="_blank" rel="noopener"{{ end }}>pdf</a>{{ end -}}
 </div>

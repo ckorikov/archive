@@ -121,6 +121,7 @@ class Publication(BaseModel):
     school: str | None = None
     section: str | None = None
     presentation_type: str | None = Field(default=None, alias="presentationType")
+    license: str | None = None  # Software only
 
     @property
     def pub_type(self) -> PublicationType | None:

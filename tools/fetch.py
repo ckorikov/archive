@@ -45,9 +45,12 @@ class ZoteroFetcherConfig:
 
 
 SKIP_TYPES = {"attachment", "note"}
-AUTHOR_TYPES = {"author", "presenter", None}
+# Creator roles shown as authors: presenter (presentations), director (video),
+# programmer/contributor (software). All answer "who made it".
+AUTHOR_TYPES = {"author", "presenter", "director", "programmer", "contributor", None}
 PREPRINT_TYPES = {"preprint"}
 PRIMARY_TYPES = {"journalArticle", "conferencePaper", "report"}
+SOFTWARE_TYPE = "computerProgram"  # carries a license field
 
 DATE_FORMATS = [
     ("%Y/%m/%d", lambda dt: (dt.year, dt.month, dt.day)),
@@ -149,11 +152,15 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
     if year == 0:
         return None
 
-    authors = [
-        Author(firstName=c.get("firstName", ""), lastName=c.get("lastName", ""))
-        for c in data.get("creators", [])
-        if c.get("creatorType") in AUTHOR_TYPES
-    ]
+    def creators_of(*types: str | None) -> list[Author]:
+        wanted = set(types)
+        return [
+            Author(firstName=c.get("firstName", ""), lastName=c.get("lastName", ""))
+            for c in data.get("creators", [])
+            if c.get("creatorType") in wanted
+        ]
+
+    license_ = empty_to_none(data.get("rights")) if item_type == SOFTWARE_TYPE else None
 
     return Publication(
         id=data["key"],
@@ -162,9 +169,10 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
         month=month,
         day=day,
         title=data.get("title", "Untitled"),
-        authors=authors,
+        authors=creators_of(*AUTHOR_TYPES),
         tags=[tag["tag"] for tag in data.get("tags", [])],
         url=empty_to_none(data.get("url")),
+        license=license_,
         language=normalize_language(data.get("language")),
         course=empty_to_none(data.get("series")),
         school=empty_to_none(data.get("place")),

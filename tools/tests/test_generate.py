@@ -6,7 +6,7 @@ from generate import (
     quote_block,
     strip_shortcodes,
 )
-from models import ArchiveConfig, Group, Publication, SiteConfig
+from models import ArchiveConfig, Author, Group, Publication, SiteConfig
 
 
 def make_config(
@@ -93,3 +93,22 @@ class TestPubToItem:
             tags=["Casimir force", "casimir", "noise"],
         )
         assert pub_to_item(pub, config)["tags"] == ["casimir"]
+
+    def test_license_emitted(self) -> None:
+        config = make_config()
+        pub = Publication(
+            id="SW",
+            type="computerProgram",
+            year=2026,
+            title="Sim8",
+            authors=[Author(firstName="C", lastName="Korikov")],
+            license="MIT",
+        )
+        item = pub_to_item(pub, config)
+        assert item["authors"] == ["C Korikov"]
+        assert item["license"] == "MIT"
+
+    def test_no_license_omitted(self) -> None:
+        config = make_config()
+        pub = Publication(id="P", type="journalArticle", year=2024, title="T")
+        assert "license" not in pub_to_item(pub, config)

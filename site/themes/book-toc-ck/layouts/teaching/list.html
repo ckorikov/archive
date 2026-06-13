@@ -19,7 +19,7 @@
             <div class="course__lectures">
               {{- range . }}
                 <div class="lecture">
-                  <a href="{{ .url | default "#" }}" class="lecture__title">{{ .title }}</a>
+                  <a href="{{ .url | default "#" }}" class="lecture__title"{{ if hasPrefix (.url | default "") "http" }} target="_blank" rel="noopener"{{ end }}>{{ .title }}</a>
                 </div>
               {{- end }}
             </div>

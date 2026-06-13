@@ -23,13 +23,29 @@ log = logging.getLogger(__name__)
 # URL-bearing fields scanned for editorial issues.
 URL_FIELDS = ("url", "arxiv_url", "pdf")
 FORBIDDEN_URL_HOST = "dropbox.com"
+MAX_TITLE_LEN = 60
+MAX_AUTHORS = 3
+
+
+def describe(pub: Publication) -> str:
+    """Human-readable label for warnings: id, title, first authors."""
+    title = pub.title
+    if len(title) > MAX_TITLE_LEN:
+        title = title[: MAX_TITLE_LEN - 1] + "…"
+    label = f"{pub.id} '{title}'"
+    if pub.authors:
+        names = ", ".join(str(a) for a in pub.authors[:MAX_AUTHORS])
+        if len(pub.authors) > MAX_AUTHORS:
+            names += " et al."
+        label += f" ({names})"
+    return label
 
 
 def check_url_present(pub: Publication) -> list[str]:
     """WARN if url is missing, empty, or a placeholder '#'."""
     url = (pub.url or "").strip()
     if not url or url == "#":
-        return [f"{pub.id}: missing or placeholder url ({pub.url!r})"]
+        return [f"{describe(pub)}: missing or placeholder url ({pub.url!r})"]
     return []
 
 
@@ -39,14 +55,14 @@ def check_no_dropbox(pub: Publication) -> list[str]:
     for field in URL_FIELDS:
         value = getattr(pub, field) or ""
         if FORBIDDEN_URL_HOST in value:
-            errors.append(f"{pub.id}: {field} points at {FORBIDDEN_URL_HOST} ({value})")
+            errors.append(f"{describe(pub)}: {field} points at {FORBIDDEN_URL_HOST} ({value})")
     return errors
 
 
 def check_authors(pub: Publication) -> list[str]:
-    """WARN if the author list is empty."""
+    """WARN if the author list is empty (software folds programmers in here)."""
     if not pub.authors:
-        return [f"{pub.id}: empty author list"]
+        return [f"{describe(pub)}: empty author list"]
     return []
 
 
@@ -59,7 +75,7 @@ def check_group_overlap(pub: Publication, config: ArchiveConfig) -> list[str]:
     pub_tags = set(config.normalize_list(pub.tags))
     matched = [g.name for g in config.groups if pub_tags & {config.normalize(t) for t in g.tags}]
     if len(matched) > 1:
-        return [f"{pub.id}: matches multiple groups {matched}"]
+        return [f"{describe(pub)}: matches multiple groups {matched}"]
     return []
 
 
