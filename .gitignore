@@ -127,3 +127,6 @@ tools/tests/snapshots/
 
 # graphify
 graphify-out/
+
+# Hugo image processing cache
+site/resources/

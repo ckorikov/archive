@@ -1,1 +1,4 @@
-<span class="company"><img class="inline-logo" src="/img/{{ .Get 0 }}.png" alt="{{ .Get 1 }}">{{ .Get 1 }}</span>{{- "" -}}
+{{- $src := resources.Get (printf "img/%s.png" (.Get 0)) -}}
+{{- if not $src }}{{ errorf "logo: assets/img/%s.png not found" (.Get 0) }}{{ end -}}
+{{- $img := $src.Process "resize x48 webp" -}}
+<span class="company"><img class="inline-logo" src="{{ $img.RelPermalink }}" width="{{ $img.Width }}" height="{{ $img.Height }}" alt="{{ .Get 1 }}">{{ .Get 1 }}</span>{{- "" -}}
