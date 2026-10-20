@@ -11,7 +11,6 @@ import click
 import yaml
 
 from models import (
-    COURSE_TYPES,
     RESEARCH_TYPES,
     ArchiveConfig,
     Contacts,
@@ -206,9 +205,9 @@ def filter_publications(
         result = [p for p in result if normalized_tag in config.normalize_list(p.tags)]
 
     if has_course is True:
-        result = [p for p in result if p.course]
+        result = [p for p in result if p.is_lecture]
     elif has_course is False:
-        result = [p for p in result if not p.course]
+        result = [p for p in result if not p.is_lecture]
 
     return result
 
@@ -223,7 +222,7 @@ def compute_courses(
     Other publications with meetingName (e.g. conference presentations) are ignored.
     """
     # Only allowed types with meetingName become course lectures
-    lectures = [p for p in publications if p.course and p.presentation_type in COURSE_TYPES]
+    lectures = [p for p in publications if p.is_lecture]
 
     # Group by normalized (course, school)
     groups: dict[tuple[str, str], list[Publication]] = {}
@@ -525,7 +524,7 @@ def build_llms_txt(
     bio = strip_shortcodes(config.site.bio or "")
 
     research = sorted(
-        [p for p in publications if not p.course and p.pub_type in RESEARCH_TYPES],
+        [p for p in publications if not p.is_lecture and p.pub_type in RESEARCH_TYPES],
         key=lambda p: p.date_sort_key,
         reverse=True,
     )

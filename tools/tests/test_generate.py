@@ -3,7 +3,9 @@
 from pathlib import Path
 
 from generate import (
+    compute_courses,
     curate_tags,
+    filter_publications,
     generate_about,
     pub_to_item,
     quote_block,
@@ -129,3 +131,38 @@ class TestGenerateAbout:
         text = about_path.read_text()
         assert "Fresh bio" in text
         assert "Stale bio" not in text
+
+
+class TestLectureVsSeries:
+    """A proceedings series must not turn a paper into a course lecture."""
+
+    def make(self, pub_type: str, presentation_type: str | None = None) -> Publication:
+        return Publication.model_validate(
+            {
+                "id": "X",
+                "type": pub_type,
+                "year": 2026,
+                "title": "T",
+                "series": "ICS '26",
+                "presentationType": presentation_type,
+            }
+        )
+
+    def test_paper_with_series_is_standalone(self) -> None:
+        paper = self.make("conferencePaper")
+        assert not paper.is_lecture
+        assert filter_publications([paper], make_config(), has_course=False) == [paper]
+        assert compute_courses([paper], make_config()) == []
+
+    def test_conference_talk_with_series_is_standalone(self) -> None:
+        talk = self.make("presentation", "Conference")
+        assert not talk.is_lecture
+        assert compute_courses([talk], make_config()) == []
+
+    def test_lecture_is_course(self) -> None:
+        lecture = self.make("presentation", "Lecture")
+        assert lecture.is_lecture
+        assert filter_publications([lecture], make_config(), has_course=False) == []
+        assert filter_publications([lecture], make_config(), has_course=True) == [lecture]
+        [course] = compute_courses([lecture], make_config())
+        assert [lec.id for lec in course.lectures] == [lecture.id]

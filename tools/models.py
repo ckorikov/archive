@@ -152,6 +152,15 @@ class Publication(BaseModel):
         return (self.year, self.month or 0, self.day or 0)
 
     @property
+    def is_lecture(self) -> bool:
+        """Course lecture: a series plus a course presentation type.
+
+        A series alone is not enough: conference papers carry the
+        proceedings series (e.g. "ICS '26") in the same Zotero field.
+        """
+        return bool(self.course) and self.presentation_type in COURSE_TYPES
+
+    @property
     def pub_date(self) -> date:
         """Publication date, defaulting missing month/day to 1."""
         return date(self.year, self.month or 1, self.day or 1)
@@ -231,7 +240,7 @@ class SectionFilter(BaseModel):
     """Filter configuration for a section."""
 
     tag: str | None = None
-    has_course: bool | None = None
+    has_course: bool | None = None  # True: only lectures (Publication.is_lecture)
 
 
 class Section(BaseModel):

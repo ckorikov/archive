@@ -129,7 +129,7 @@ def print_stats(data: PublicationsData) -> None:
     research_pubs = [p for p in pubs if p.pub_type in RESEARCH_TYPES]
     paper_num = len(research_pubs)
     # Count courses by unique (course, school) pairs
-    courses = {(p.course, p.school or "") for p in pubs if p.course}
+    courses = {(p.course, p.school or "") for p in pubs if p.is_lecture}
 
     print("\n--- Statistics ---")
     print(f"papers: {paper_num}")
