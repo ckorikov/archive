@@ -1,14 +1,17 @@
 {{- /*
   JSON-LD structured data.
-  Always emits Person (with sameAs from About page contacts).
+  Always emits Person (sameAs from About contacts; worksFor, affiliation,
+  knowsAbout from About params generated from archive.yaml).
   Adds WebSite on the home page.
 */ -}}
 {{- $author := site.Params.author | default site.Title -}}
 {{- $contacts := dict -}}
 {{- $jobTitle := "" -}}
+{{- $about := dict -}}
 {{- with site.GetPage "/about" -}}
 {{- with .Params.contacts }}{{ $contacts = . }}{{ end -}}
 {{- with .Params.job_title }}{{ $jobTitle = . }}{{ end -}}
+{{- $about = .Params -}}
 {{- end -}}
 {{- $sameAs := slice -}}
 {{- with index $contacts "github" -}}
@@ -30,6 +33,19 @@
 -}}
 {{- with $jobTitle }}{{ $person = merge $person (dict "jobTitle" .) }}{{ end -}}
 {{- if $sameAs }}{{ $person = merge $person (dict "sameAs" $sameAs) }}{{ end -}}
+{{- /* Organizations: works_for -> worksFor, affiliations -> affiliation */ -}}
+{{- range $param, $prop := dict "works_for" "worksFor" "affiliations" "affiliation" -}}
+{{- with index $about $param -}}
+{{- $orgs := slice -}}
+{{- range . -}}
+{{- $org := dict "@type" "Organization" "name" .name -}}
+{{- with .url }}{{ $org = merge $org (dict "url" .) }}{{ end -}}
+{{- $orgs = $orgs | append $org -}}
+{{- end -}}
+{{- $person = merge $person (dict $prop $orgs) -}}
+{{- end -}}
+{{- end -}}
+{{- with index $about "knows_about" }}{{ $person = merge $person (dict "knowsAbout" .) }}{{ end -}}
 {{- $graph := slice $person -}}
 {{- if .IsHome -}}
 {{- $website := dict

@@ -263,6 +263,13 @@ class Contacts(BaseModel):
     twitter: str | None = None
 
 
+class Organization(BaseModel):
+    """Organization for Person structured data (schema.org)."""
+
+    name: str
+    url: str | None = None
+
+
 class SiteConfig(BaseModel):
     """Site configuration."""
 
@@ -270,6 +277,10 @@ class SiteConfig(BaseModel):
     job_title: str | None = None
     bio: str | None = None
     contacts: Contacts | None = None
+    # schema.org Person: current employers, other affiliations, expertise topics
+    works_for: list[Organization] = Field(default_factory=list)
+    affiliations: list[Organization] = Field(default_factory=list)
+    knows_about: list[str] = Field(default_factory=list)
 
 
 class ArchiveConfig(BaseModel):

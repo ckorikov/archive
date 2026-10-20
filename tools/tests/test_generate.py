@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import yaml
+
 from generate import (
     compute_courses,
     curate_tags,
@@ -11,7 +13,7 @@ from generate import (
     quote_block,
     strip_shortcodes,
 )
-from models import ArchiveConfig, Author, Group, Publication, SiteConfig
+from models import ArchiveConfig, Author, Group, Organization, Publication, SiteConfig
 
 
 def make_config(
@@ -131,6 +133,27 @@ class TestGenerateAbout:
         text = about_path.read_text()
         assert "Fresh bio" in text
         assert "Stale bio" not in text
+
+    def test_writes_person_structured_data(self, tmp_path: Path) -> None:
+        site = SiteConfig(
+            author="Owner",
+            works_for=[Organization(name="Huawei", url="https://www.huawei.com")],
+            affiliations=[Organization(name="MIPT")],
+            knows_about=["Casimir effect"],
+        )
+
+        generate_about(tmp_path, ArchiveConfig(site=site))
+
+        front = yaml.safe_load((tmp_path / "about" / "_index.md").read_text().split("---")[1])
+        assert front["works_for"] == [{"name": "Huawei", "url": "https://www.huawei.com"}]
+        assert front["affiliations"] == [{"name": "MIPT"}]
+        assert front["knows_about"] == ["Casimir effect"]
+
+    def test_omits_empty_person_fields(self, tmp_path: Path) -> None:
+        generate_about(tmp_path, ArchiveConfig(site=SiteConfig(author="Owner")))
+
+        front = yaml.safe_load((tmp_path / "about" / "_index.md").read_text().split("---")[1])
+        assert not {"works_for", "affiliations", "knows_about"} & front.keys()
 
 
 class TestLectureVsSeries:

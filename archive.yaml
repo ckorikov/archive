@@ -9,6 +9,16 @@ site:
     github: "ckorikov"
     scholar: "DgJb92EAAAAJ"
     orcid: "0000-0001-6227-5542"
+  # Structured data (schema.org Person) for search engines and AI assistants
+  works_for:
+    - name: "Huawei"
+      url: "https://www.huawei.com"
+  affiliations:
+    - name: "Moscow Institute of Physics and Technology"
+      url: "https://mipt.ru"
+  knows_about:
+    - "Casimir effect"
+    - "Artificial intelligence"
 
 # Groups for main page (order matters, first match wins)
 groups:

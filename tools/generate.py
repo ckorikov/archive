@@ -418,6 +418,10 @@ def group_by_school(courses: list[Course], config: ArchiveConfig) -> list[dict]:
     return [{"name": school, "courses": cards(group)} for school, group in schools]
 
 
+# SiteConfig fields passed to the about page for the Person JSON-LD
+PERSON_FIELDS = {"works_for", "affiliations", "knows_about"}
+
+
 def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     """Generate about page with contacts."""
     about_path = content_dir / "about" / "_index.md"
@@ -433,6 +437,8 @@ def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     }
     if config.site.job_title:
         data["job_title"] = config.site.job_title
+    person = config.site.model_dump(include=PERSON_FIELDS, exclude_none=True)
+    data.update({key: value for key, value in person.items() if value})
     bio = config.site.bio or ""
     write_frontmatter(about_path, data, content=bio)
     log.info("Generated about/_index.md")
