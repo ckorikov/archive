@@ -9,22 +9,22 @@
 
 :root {
   /* Colors */
-  --c-paper: #f4eee2;
+  --c-paper: #f3f1ec;
   --c-ink: #2c2925;
-  --c-ink-medium: #66605c;
-  --c-ink-light: #695f57;
-  --c-ink-faint: #6a6058;
-  --c-selection: #e3d5bb;
+  --c-ink-medium: #605b57;
+  --c-ink-light: #5f5a55;
+  --c-ink-faint: #5e5955;
+  --c-selection: #e0dbd1;
   /* Paper effect: inline SVG noise, no extra requests.
      Fibres tile and scroll with the text; mottling and vignette sit on a
      fixed layer (cheap to composite, unlike background-attachment: fixed).
      Greys above are tuned for AA contrast on the darkest mottled areas. */
-  --paper-fibres: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .35' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .17 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23f%29'/%3E%3C/svg%3E");
-  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='3' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23m%29'/%3E%3C/svg%3E");
+  --paper-fibres: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .35' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .33 0 0 0 0 .31 0 0 0 0 .28 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23f%29'/%3E%3C/svg%3E");
+  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='3' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 .40 0 0 0 0 .38 0 0 0 0 .34 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23m%29'/%3E%3C/svg%3E");
   --paper-vignette: radial-gradient(
     ellipse at 50% 40%,
     transparent 55%,
-    rgb(120 90 50 / 6%) 100%
+    rgb(100 92 84 / 6%) 100%
   );
   --c-accent: #6b1c00;
   --c-pdf: #2d6a4f;
