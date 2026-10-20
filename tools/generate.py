@@ -2,6 +2,7 @@
 """Generate Hugo content from publications.json + archive.yaml."""
 
 import logging
+import re
 import tomllib
 from datetime import date
 from pathlib import Path
@@ -17,6 +18,7 @@ from models import (
     Course,
     Publication,
     PublicationsData,
+    Section,
     get_archive_config_path,
     get_content_dir,
     get_static_data_dir,
@@ -26,6 +28,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
 DEFAULT_DATE = date(1990, 3, 25)
+# (year, date sort key, frontmatter item) — input to year_groups()
+type YearEntry = tuple[int, tuple[int, int, int], dict]
+SHORTCODE = re.compile(r"\{\{<(.*?)>\}\}", re.DOTALL)
 
 
 def strip_shortcodes(text: str) -> str:
@@ -34,22 +39,13 @@ def strip_shortcodes(text: str) -> str:
     Treats the last quoted argument as the human-readable label. Used to
     sanitize bio text destined for plain-text outputs (llms.txt, ai.txt).
     """
-    out: list[str] = []
-    i = 0
-    while i < len(text):
-        start = text.find("{{<", i)
-        if start < 0:
-            out.append(text[i:])
-            break
-        out.append(text[i:start])
-        end = text.find(">}}", start)
-        if end < 0:
-            out.append(text[start:])
-            break
-        parts = text[start + 3 : end].split('"')
-        out.append(parts[-2] if len(parts) >= 3 else "")
-        i = end + 3
-    return "".join(out)
+    return SHORTCODE.sub(lambda m: shortcode_label(m.group(1)), text)
+
+
+def shortcode_label(args: str) -> str:
+    """Return the last quoted argument of a shortcode, or '' if none."""
+    parts = args.split('"')
+    return parts[-2] if len(parts) >= 3 else ""
 
 
 def quote_block(text: str) -> str:
@@ -135,10 +131,13 @@ def course_to_card(course: Course, config: ArchiveConfig) -> dict:
         "lectures_count": len(course.lectures),
         "lectures": [lecture_to_item(lec) for lec in course.lectures],
     }
+    return with_description(card, course, config)
+
+
+def with_description(data: dict, course: Course, config: ArchiveConfig) -> dict:
+    """Return data with the course description appended, if configured."""
     description = config.course_description(course.slug)
-    if description:
-        card["description"] = description
-    return card
+    return {**data, "description": description} if description else data
 
 
 def group_pubs_by_year(
@@ -146,20 +145,7 @@ def group_pubs_by_year(
     config: ArchiveConfig,
 ) -> list[dict]:
     """Group publications by year, return list of year groups."""
-    by_year: dict[int, list[Publication]] = {}
-    for pub in publications:
-        by_year.setdefault(pub.year, []).append(pub)
-
-    groups = []
-    for year in sorted(by_year.keys(), reverse=True):
-        pubs = sorted(by_year[year], key=lambda p: p.date_sort_key, reverse=True)
-        groups.append(
-            {
-                "year": year,
-                "items": [pub_to_item(p, config) for p in pubs],
-            }
-        )
-    return groups
+    return year_groups([pub_entry(p, config) for p in publications])
 
 
 def group_by_year(
@@ -168,26 +154,33 @@ def group_by_year(
     config: ArchiveConfig,
 ) -> list[dict]:
     """Group publications and courses by year, return list of year groups."""
-    by_year: dict[int, list[dict]] = {}
+    pub_entries = [pub_entry(p, config) for p in publications]
+    course_entries = [course_entry(c, config) for c in courses]
+    return year_groups(pub_entries + course_entries)
 
-    # Add standalone publications
-    for pub in publications:
-        item = pub_to_item(pub, config)
-        item["_sort_key"] = pub.date_sort_key
-        by_year.setdefault(pub.year, []).append(item)
 
-    # Add courses
-    for course in courses:
-        item = course_to_item(course, config)
-        item["_sort_key"] = course.latest_date
-        by_year.setdefault(course.year, []).append(item)
+def pub_entry(pub: Publication, config: ArchiveConfig) -> YearEntry:
+    """Return (year, sort key, item) for a publication."""
+    return (pub.year, pub.date_sort_key, pub_to_item(pub, config))
 
+
+def course_entry(course: Course, config: ArchiveConfig) -> YearEntry:
+    """Return (year, sort key, item) for a course."""
+    return (course.year, course.latest_date, course_to_item(course, config))
+
+
+def year_groups(entries: list[YearEntry]) -> list[dict]:
+    """Bucket items by year (newest first), each sorted by date descending.
+
+    Sorting is stable, so items with equal dates keep their input order.
+    """
+    by_year: dict[int, list[YearEntry]] = {}
+    for entry in entries:
+        by_year.setdefault(entry[0], []).append(entry)
     groups = []
-    for year in sorted(by_year.keys(), reverse=True):
-        items = sorted(by_year[year], key=lambda x: x["_sort_key"], reverse=True)
-        items = [{k: v for k, v in item.items() if k != "_sort_key"} for item in items]
-        groups.append({"year": year, "items": items})
-
+    for year in sorted(by_year, reverse=True):
+        newest = sorted(by_year[year], key=lambda e: e[1], reverse=True)
+        groups.append({"year": year, "items": [item for *_, item in newest]})
     return groups
 
 
@@ -204,10 +197,8 @@ def filter_publications(
         normalized_tag = config.normalize(tag)
         result = [p for p in result if normalized_tag in config.normalize_list(p.tags)]
 
-    if has_course is True:
-        result = [p for p in result if p.is_lecture]
-    elif has_course is False:
-        result = [p for p in result if not p.is_lecture]
+    if has_course is not None:
+        result = [p for p in result if p.is_lecture == has_course]
 
     return result
 
@@ -216,30 +207,19 @@ def compute_courses(
     publications: list[Publication],
     config: ArchiveConfig,
 ) -> list[Course]:
-    """Compute courses from publications with allowed presentation_type and course field.
-
-    Only publications with presentation_type in COURSE_TYPES become course lectures.
-    Other publications with meetingName (e.g. conference presentations) are ignored.
-    """
-    # Only allowed types with meetingName become course lectures
-    lectures = [p for p in publications if p.is_lecture]
-
-    # Group by normalized (course, school)
+    """Group lectures (Publication.is_lecture) into courses by (course, school)."""
     groups: dict[tuple[str, str], list[Publication]] = {}
-    for lec in lectures:
-        course_name = config.normalize(lec.course)
-        school_name = config.normalize(lec.school) if lec.school else ""
-        key = (course_name, school_name)
-        groups.setdefault(key, []).append(lec)
+    for lec in (p for p in publications if p.is_lecture):
+        groups.setdefault(course_key(lec, config), []).append(lec)
 
-    courses = []
-    for (name, school), group_lectures in groups.items():
-        course = Course.from_lectures(name, school, group_lectures)
-        courses.append(course)
+    courses = [Course.from_lectures(*key, lecs) for key, lecs in groups.items()]
+    return sorted(courses, key=lambda c: (-c.year, c.name))
 
-    # Sort by year descending, then name
-    courses.sort(key=lambda c: (-c.year, c.name))
-    return courses
+
+def course_key(lecture: Publication, config: ArchiveConfig) -> tuple[str, str]:
+    """Return the normalized (course, school) pair a lecture belongs to."""
+    school = config.normalize(lecture.school) if lecture.school else ""
+    return (config.normalize(lecture.course), school)
 
 
 def compute_stats(publications: list[Publication], courses: list[Course]) -> dict:
@@ -273,77 +253,51 @@ def write_frontmatter(path: Path, data: dict, content: str = "") -> None:
     log.debug(f"Wrote {path}")
 
 
-def match_pubs_by_tags(
-    pubs: list[Publication],
-    group_tags: set[str],
-    seen_ids: set[str],
-    config: ArchiveConfig,
-) -> list[Publication]:
-    """Match publications by tags, updating seen_ids."""
-    matched = []
-    for pub in pubs:
-        if pub.id in seen_ids:
-            continue
-        pub_tags = set(config.normalize_list(pub.tags))
-        if pub_tags & group_tags:
-            matched.append(pub)
-            seen_ids.add(pub.id)
-    return matched
-
-
-def match_courses_by_tags(
-    courses: list[Course],
-    group_tags: set[str],
-    seen_slugs: set[str],
-    config: ArchiveConfig,
-) -> list[Course]:
-    """Match courses by tags (any lecture tag), updating seen_slugs."""
-    matched = []
-    for course in courses:
-        if course.slug in seen_slugs:
-            continue
-        course_tags = {config.normalize(t) for t in course.tags}
-        if course_tags & group_tags:
-            matched.append(course)
-            seen_slugs.add(course.slug)
-    return matched
-
-
 def group_items(
     standalone_pubs: list[Publication],
     courses: list[Course],
     config: ArchiveConfig,
 ) -> list[dict]:
-    """Group standalone publications and courses by tags."""
-    seen_pub_ids: set[str] = set()
-    seen_course_slugs: set[str] = set()
-    groups_data = []
+    """Group standalone publications and courses by tags, plus 'Other'."""
+    tag_sets = [{config.normalize(t) for t in g.tags} for g in config.groups]
+    pub_buckets = bucket_by_tags(
+        [(p.id, set(config.normalize_list(p.tags)), p) for p in standalone_pubs],
+        tag_sets,
+    )
+    course_buckets = bucket_by_tags(
+        [(c.slug, {config.normalize(t) for t in c.tags}, c) for c in courses],
+        tag_sets,
+    )
+    names = [g.name for g in config.groups] + ["Other"]
+    rows = zip(names, pub_buckets, course_buckets, strict=True)
+    return [
+        {"name": name, "items": group_by_year(pubs, group_courses, config)}
+        for name, pubs, group_courses in rows
+        if pubs or group_courses
+    ]
 
-    for group in config.groups:
-        group_tags = {config.normalize(t) for t in group.tags}
-        matched_pubs = match_pubs_by_tags(standalone_pubs, group_tags, seen_pub_ids, config)
-        matched_courses = match_courses_by_tags(courses, group_tags, seen_course_slugs, config)
 
-        if matched_pubs or matched_courses:
-            groups_data.append(
-                {
-                    "name": group.name,
-                    "items": group_by_year(matched_pubs, matched_courses, config),
-                }
-            )
+def bucket_by_tags[T](
+    entries: list[tuple[str, set[str], T]],
+    tag_sets: list[set[str]],
+) -> list[list[T]]:
+    """Assign each (key, tags, item) to the first tag set its tags intersect.
 
-    # Other: items not matching any group
-    other_pubs = [p for p in standalone_pubs if p.id not in seen_pub_ids]
-    other_courses = [c for c in courses if c.slug not in seen_course_slugs]
-    if other_pubs or other_courses:
-        groups_data.append(
-            {
-                "name": "Other",
-                "items": group_by_year(other_pubs, other_courses, config),
-            }
-        )
-
-    return groups_data
+    Returns one bucket per tag set plus a trailing bucket of unmatched items.
+    A key is claimed once: later entries with an already claimed key are dropped.
+    """
+    claimed: set[str] = set()
+    buckets: list[list[T]] = []
+    for group_tags in tag_sets:
+        bucket: list[T] = []
+        for key, tags, item in entries:
+            if key in claimed or not tags & group_tags:
+                continue
+            claimed.add(key)
+            bucket.append(item)
+        buckets.append(bucket)
+    buckets.append([item for key, _, item in entries if key not in claimed])
+    return buckets
 
 
 def generate_index(
@@ -351,7 +305,6 @@ def generate_index(
     publications: list[Publication],
     courses: list[Course],
     config: ArchiveConfig,
-    stats: dict,
 ) -> None:
     """Generate main index page with groups, stats, and nav."""
     standalone = filter_publications(publications, config, has_course=False)
@@ -362,7 +315,7 @@ def generate_index(
         "title": "Publications",
         "layout": "index",
         "date": latest_pub_date(publications),
-        "stats": stats,
+        "stats": compute_stats(publications, courses),
         "nav": nav_items,
         "groups": groups_data,
     }
@@ -374,26 +327,24 @@ def generate_index(
 
 def generate_section(
     content_dir: Path,
-    section_path: str,
-    label: str,
+    section: Section,
     publications: list[Publication],
     config: ArchiveConfig,
 ) -> None:
     """Generate a section index page with grouped publications."""
-    clean_path = section_path.strip("/")
+    clean_path = section.path.strip("/")
     if not clean_path:
         return
 
     data = {
-        "title": label,
+        "title": section.label,
         "type": "publications",
         "date": latest_pub_date(publications),
         "publications_count": len(publications),
         "items": group_pubs_by_year(publications, config),
     }
 
-    section_dir = content_dir / clean_path
-    write_frontmatter(section_dir / "_index.md", data)
+    write_frontmatter(content_dir / clean_path / "_index.md", data)
     log.info(f"Generated {clean_path}/_index.md ({len(publications)} publications)")
 
 
@@ -403,12 +354,6 @@ def generate_course_page(
     config: ArchiveConfig,
 ) -> None:
     """Generate individual course page."""
-    lectures_data = []
-    for lec in course.lectures:
-        item = lecture_to_item(lec)
-        item["section"] = config.normalize(lec.section) if lec.section else ""
-        lectures_data.append(item)
-
     course_data: dict = {
         "title": config.normalize(course.name),
         "type": "course",
@@ -418,12 +363,16 @@ def generate_course_page(
         "school": course.school,
         "year": course.year,
         "lectures_count": len(course.lectures),
-        "lectures": lectures_data,
+        "lectures": [sectioned_lecture_item(lec, config) for lec in course.lectures],
     }
-    description = config.course_description(course.slug)
-    if description:
-        course_data["description"] = description
-    write_frontmatter(teaching_dir / f"{course.slug}.md", course_data)
+    page_data = with_description(course_data, course, config)
+    write_frontmatter(teaching_dir / f"{course.slug}.md", page_data)
+
+
+def sectioned_lecture_item(lec: Publication, config: ArchiveConfig) -> dict:
+    """Convert lecture to item dict tagged with its normalized course section."""
+    section = config.normalize(lec.section) if lec.section else ""
+    return {**lecture_to_item(lec), "section": section}
 
 
 def generate_teaching(
@@ -433,35 +382,13 @@ def generate_teaching(
 ) -> None:
     """Generate teaching section with course pages."""
     teaching_dir = content_dir / "teaching"
-    by_school: dict[str, list[Course]] = {}
-    for course in courses:
-        by_school.setdefault(course.school, []).append(course)
-
-    # Sort schools by their latest course date (most recent first)
-    schools_sorted = sorted(
-        by_school.keys(),
-        key=lambda s: max(c.latest_date for c in by_school[s]),
-        reverse=True,
-    )
-
-    schools_data = []
-    for school in schools_sorted:
-        school_courses = sorted(by_school[school], key=lambda c: c.latest_date, reverse=True)
-        schools_data.append(
-            {
-                "name": school,
-                "courses": [course_to_card(c, config) for c in school_courses],
-            }
-        )
-
-    # Teaching index
     all_lectures = [lec for c in courses for lec in c.lectures]
     data = {
         "title": "Teaching",
         "layout": "teaching/list",
         "date": latest_pub_date(all_lectures),
         "courses_count": len(courses),
-        "schools": schools_data,
+        "schools": group_by_school(courses, config),
     }
     write_frontmatter(teaching_dir / "_index.md", data)
     log.info(f"Generated teaching/_index.md ({len(courses)} courses)")
@@ -471,6 +398,24 @@ def generate_teaching(
         generate_course_page(teaching_dir, course, config)
 
     log.info(f"Generated {len(courses)} course pages")
+
+
+def group_by_school(courses: list[Course], config: ArchiveConfig) -> list[dict]:
+    """Group course cards by school; schools and courses newest first."""
+    by_school: dict[str, list[Course]] = {}
+    for course in courses:
+        by_school.setdefault(course.school, []).append(course)
+
+    def cards(group: list[Course]) -> list[dict]:
+        newest = sorted(group, key=lambda c: c.latest_date, reverse=True)
+        return [course_to_card(c, config) for c in newest]
+
+    schools = sorted(
+        by_school.items(),
+        key=lambda kv: max(c.latest_date for c in kv[1]),
+        reverse=True,
+    )
+    return [{"name": school, "courses": cards(group)} for school, group in schools]
 
 
 def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
@@ -517,60 +462,76 @@ def build_llms_txt(
     publications: list[Publication],
     courses: list[Course],
     config: ArchiveConfig,
-    stats: dict,
     base_url: str,
 ) -> str:
     """Build llms.txt content for LLM crawlers."""
-    bio = strip_shortcodes(config.site.bio or "")
+    contact_lines = format_contacts(config.site.contacts)
+    lines = [
+        *llms_header(config, compute_stats(publications, courses)),
+        *md_section("Pages", llms_pages(config, base_url)),
+        *md_section("Data", llms_data(base_url)),
+        *md_section("Research papers", llms_research(publications)),
+        *md_section("Courses", llms_courses(courses, base_url)),
+        *(md_section("Contacts", contact_lines) if contact_lines else []),
+        "",
+    ]
+    return "\n".join(lines)
 
+
+def md_section(heading: str, lines: list[str]) -> list[str]:
+    """Return a '## heading' markdown section, preceded by a blank line."""
+    return ["", f"## {heading}", "", *lines]
+
+
+def llms_header(config: ArchiveConfig, stats: dict) -> list[str]:
+    """Return the llms.txt title and bio/stats blockquote."""
+    bio = strip_shortcodes(config.site.bio or "")
+    return [
+        f"# {config.site.author} — Archive",
+        "",
+        quote_block(bio),
+        f"> {stats['papers']} papers, {stats['courses']} courses, {stats['year_start']}–{stats['year_end']}.",
+    ]
+
+
+def llms_pages(config: ArchiveConfig, base_url: str) -> list[str]:
+    """Return links to site sections and the about page."""
+    sections = [f"- [{s.label}]({base_url + s.path})" for s in config.sections]
+    return [*sections, f"- [About]({base_url}/about/)"]
+
+
+def llms_data(base_url: str) -> list[str]:
+    """Return links to machine-readable site data."""
+    return [
+        f"- [publications.json]({base_url}/data/publications.json): "
+        "Machine-readable catalog of all publications (JSON)",
+        f"- [RSS feed]({base_url}/index.xml)",
+        f"- [Sitemap]({base_url}/sitemap.xml)",
+    ]
+
+
+def llms_research(publications: list[Publication]) -> list[str]:
+    """Return research papers (no lectures), newest first."""
     research = sorted(
         [p for p in publications if not p.is_lecture and p.pub_type in RESEARCH_TYPES],
         key=lambda p: p.date_sort_key,
         reverse=True,
     )
-
-    lines = [
-        f"# {config.site.author} — Archive",
-        "",
-        quote_block(bio),
-        f"> {stats['papers']} papers, {stats['courses']} courses, {stats['year_start']}–{stats['year_end']}.",
-        "",
-        "## Pages",
-        "",
-    ]
-    for section in config.sections:
-        url = base_url + section.path
-        lines.append(f"- [{section.label}]({url})")
-    lines.append(f"- [About]({base_url}/about/)")
-
-    lines += [
-        "",
-        "## Data",
-        "",
-        f"- [publications.json]({base_url}/data/publications.json): "
-        "Machine-readable catalog of all publications (JSON)",
-        f"- [RSS feed]({base_url}/index.xml)",
-        f"- [Sitemap]({base_url}/sitemap.xml)",
-        "",
-        "## Research papers",
-        "",
-    ]
+    lines = []
     for pub in research:
         authors = ", ".join(str(a) for a in pub.authors if str(a))
-        url = pub.url or "#"
-        lines.append(f"- [{pub.title}]({url}): {authors} ({pub.year})")
+        lines.append(f"- [{pub.title}]({pub.url or '#'}): {authors} ({pub.year})")
+    return lines
 
-    lines += ["", "## Courses", ""]
+
+def llms_courses(courses: list[Course], base_url: str) -> list[str]:
+    """Return course page links with school, year and lecture count."""
+    lines = []
     for course in courses:
         url = f"{base_url}/teaching/{course.slug}/"
-        lines.append(f"- [{course.name}]({url}): {course.school}, {course.year}, {len(course.lectures)} lectures")
-
-    contact_lines = format_contacts(config.site.contacts)
-    if contact_lines:
-        lines += ["", "## Contacts", ""] + contact_lines
-
-    lines.append("")
-    return "\n".join(lines)
+        details = f"{course.school}, {course.year}, {len(course.lectures)} lectures"
+        lines.append(f"- [{course.name}]({url}): {details}")
+    return lines
 
 
 def read_base_url(site_dir: Path) -> str:
@@ -587,45 +548,58 @@ def generate_all(
 ) -> None:
     """Generate all content files."""
     content_dir.mkdir(parents=True, exist_ok=True)
-
-    # Compute courses and stats
     courses = compute_courses(publications, config)
-    stats = compute_stats(publications, courses)
 
-    # Generate main index (includes stats and nav)
-    generate_index(content_dir, publications, courses, config, stats)
+    generate_index(content_dir, publications, courses, config)
+    generate_sections(content_dir, publications, courses, config)
+    generate_about(content_dir, config)  # not in nav
+    write_llms_txt(content_dir.parent, publications, courses, config)
 
-    # Generate sections from config
+
+def generate_sections(
+    content_dir: Path,
+    publications: list[Publication],
+    courses: list[Course],
+    config: ArchiveConfig,
+) -> None:
+    """Generate every non-root section; the course section becomes Teaching."""
     for section in config.sections:
         if section.path == "/":
             continue
-
-        # Apply filters
-        section_pubs = publications
-        if section.filter:
-            section_pubs = filter_publications(
-                publications,
-                config,
-                tag=section.filter.tag,
-                has_course=section.filter.has_course,
-            )
-
-        # Special sections
         if section.filter and section.filter.has_course:
             generate_teaching(content_dir, courses, config)
-        else:
-            generate_section(content_dir, section.path, section.label, section_pubs, config)
+            continue
+        section_pubs = section_publications(section, publications, config)
+        generate_section(content_dir, section, section_pubs, config)
 
-    # Generate about page (not in nav)
-    generate_about(content_dir, config)
 
-    # Generate llms.txt and ai.txt
-    site_dir = content_dir.parent
-    static_dir = site_dir / "static"
+def section_publications(
+    section: Section,
+    publications: list[Publication],
+    config: ArchiveConfig,
+) -> list[Publication]:
+    """Apply the section's filter (if any) to publications."""
+    if not section.filter:
+        return publications
+    return filter_publications(
+        publications,
+        config,
+        tag=section.filter.tag,
+        has_course=section.filter.has_course,
+    )
+
+
+def write_llms_txt(
+    site_dir: Path,
+    publications: list[Publication],
+    courses: list[Course],
+    config: ArchiveConfig,
+) -> None:
+    """Write llms.txt and its ai.txt copy into the site's static dir."""
     base_url = read_base_url(site_dir)
-    llms_content = build_llms_txt(publications, courses, config, stats, base_url)
+    llms_content = build_llms_txt(publications, courses, config, base_url)
     for name in ("llms.txt", "ai.txt"):
-        (static_dir / name).write_text(llms_content)
+        (site_dir / "static" / name).write_text(llms_content)
     log.info("Generated llms.txt, ai.txt")
 
 
