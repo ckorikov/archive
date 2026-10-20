@@ -12,9 +12,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
           cache-dependency-glob: tools/uv.lock
@@ -28,7 +28,7 @@ jobs:
           hash=$(uv run --project tools tools/check_zotero.py)
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         id: cache
         with:
           path: .zotero-version
