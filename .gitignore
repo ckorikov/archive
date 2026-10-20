@@ -124,3 +124,6 @@ public/
 
 # Visual test snapshots (local only)
 tools/tests/snapshots/
+
+# graphify
+graphify-out/
