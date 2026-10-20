@@ -1,4 +1,6 @@
+# Content signals (https://contentsignals.org/): search, AI answers and training allowed
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 Sitemap: {{ site.BaseURL }}sitemap.xml
