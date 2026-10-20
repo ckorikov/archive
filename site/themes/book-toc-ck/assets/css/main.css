@@ -366,24 +366,6 @@ a {
   margin-left: var(--space-sm);
 }
 
-.course__description {
-  font-size: var(--text-sm);
-  color: var(--c-ink-medium);
-  line-height: 1.5;
-  margin-bottom: var(--space-sm);
-}
-
-.course__meta {
-  font-size: var(--text-xs);
-  color: var(--c-ink-light);
-  letter-spacing: 0.05em;
-}
-
-.course__tag {
-  display: inline;
-}
-
-.course__tag + .course__tag::before,
 .course-header__tag + .course-header__tag::before {
   content: ", ";
 }
