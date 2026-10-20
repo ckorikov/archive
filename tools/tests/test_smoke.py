@@ -40,3 +40,16 @@ def test_course_has_description(page: Page) -> None:
 def test_casimir_has_publications(page: Page) -> None:
     page.goto(BASE_URL + "/casimir/")
     expect(page.locator(".item").first).to_be_visible()
+
+
+@pytest.mark.parametrize("path,name", PAGES)
+def test_page_has_own_og_card(page: Page, path: str, name: str) -> None:
+    page.goto(BASE_URL + path)
+    meta = page.locator('meta[property="og:image"]')
+    image_url = meta.get_attribute("content")
+    assert image_url and image_url.endswith(".jpg"), image_url
+    assert page.locator('meta[property="og:image:width"]').get_attribute("content") == "1200"
+    assert page.locator('meta[property="og:image:height"]').get_attribute("content") == "630"
+    response = page.request.get(image_url)
+    assert response.status == 200, f"{image_url} returned {response.status}"
+    assert response.headers["content-type"] == "image/jpeg"

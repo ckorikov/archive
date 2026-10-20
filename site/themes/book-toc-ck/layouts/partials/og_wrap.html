@@ -1,0 +1,29 @@
+{{- /*
+      Greedy word wrap for Open Graph card titles.
+      Input: dict "text" "max" (max characters per line).
+      Returns a slice of lines. Short words (1-2 letters: "в", "и", "of")
+      stick to the next word so they never hang at the end of a line.
+    */ -}}
+{{- $words := slice -}}
+{{- $short := "" -}}
+{{- range split .text " " -}}
+{{- if le (strings.RuneCount .) 2 -}}
+{{- $short = printf "%s%s " $short . -}}
+{{- else -}}
+{{- $words = $words | append (printf "%s%s" $short .) -}}
+{{- $short = "" -}}
+{{- end -}}
+{{- end -}}
+{{- with strings.TrimSpace $short }}{{ $words = $words | append . }}{{ end -}}
+{{- $lines := slice -}}
+{{- $line := "" -}}
+{{- range $words -}}
+{{- $try := cond (eq $line "") . (printf "%s %s" $line .) -}}
+{{- if and (gt (strings.RuneCount $try) $.max) (ne $line "") -}}
+{{- $lines = $lines | append $line -}}
+{{- $line = . -}}
+{{- else -}}
+{{- $line = $try -}}
+{{- end -}}
+{{- end -}}
+{{- return ($lines | append $line) -}}

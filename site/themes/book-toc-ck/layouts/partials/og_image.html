@@ -1,0 +1,52 @@
+{{- /*
+      Open Graph card (1200x630 JPEG) for the current page: paper background,
+      small-caps label, wrapped title, italic subtitle and the site host.
+      Returns the image resource; head.html uses it for og:image.
+    */ -}}
+{{- $roman := resources.Get "og/CormorantGaramond.ttf" -}}
+{{- $italic := resources.Get "og/CormorantGaramond-Italic.ttf" -}}
+{{- $about := site.GetPage "/about" -}}
+{{- $author := site.Params.author | default site.Title -}}
+{{- /* Label, title and subtitle from the page's own data */ -}}
+{{- $label := site.Params.header_label | default site.Title -}}
+{{- $title := .Title -}}
+{{- $sub := site.Params.description -}}
+{{- if eq .Type "course" -}}
+{{- $label = "Teaching" -}}
+{{- $parts := slice .Params.school -}}
+{{- if not (strings.Contains .Title (string .Params.year)) }}{{ $parts = $parts | append (string .Params.year) }}{{ end -}}
+{{- with .Params.lectures_count }}{{ $parts = $parts | append (printf "%d %s" . (cond (eq . 1) "lecture" "lectures")) }}{{ end -}}
+{{- $sub = delimit $parts " · " -}}
+{{- else if or .IsHome (eq .Type "about") -}}
+{{- $title = $author -}}
+{{- with $about }}{{ with .Params.job_title }}{{ $sub = . }}{{ end }}{{ end -}}
+{{- else if .Params.courses_count -}}
+{{- $sub = printf "%d courses" .Params.courses_count -}}
+{{- else if .Params.publications_count -}}
+{{- $years := slice -}}
+{{- range .Params.items }}{{ $years = $years | append .year }}{{ end -}}
+{{- $sub = printf "%d publications" .Params.publications_count -}}
+{{- with $years }}{{ $sub = printf "%s · %d–%d" $sub (int (math.Min $years)) (int (math.Max $years)) }}{{ end -}}
+{{- end -}}
+{{- /* Layout: long titles get a smaller size and a wider line */ -}}
+{{- $long := gt (strings.RuneCount $title) 24 -}}
+{{- $size := cond $long 64 84 -}}
+{{- $lines := partial "og_wrap.html" (dict "text" $title "max" (cond $long 32 24)) -}}
+{{- $lead := math.Round (mul $size 1.12) -}}
+{{- $spaced := delimit (split (upper $label) "") " " -}}
+{{- $host := (urls.Parse site.BaseURL).Host -}}
+{{- $filters := slice
+    (images.Text $spaced (dict "font" $roman "size" 24 "color" "#5e5955" "x" 96 "y" 110))
+    (images.Text $host (dict "font" $italic "size" 28 "color" "#6b1c00" "x" 96 "y" 520))
+    -}}
+{{- $y := 200 -}}
+{{- range $lines -}}
+{{- $filters = $filters | append (images.Text . (dict "font" $roman "size" $size "color" "#2c2925" "x" 96 "y" $y)) -}}
+{{- $y = add $y $lead -}}
+{{- end -}}
+{{- with $sub -}}
+{{- $filters = $filters | append (images.Text . (dict "font" $italic "size" 38 "color" "#605b57" "x" 96 "y" (add $y 24))) -}}
+{{- end -}}
+{{- $name := strings.Trim .RelPermalink "/" | default "home" | replaceRE "/" "-" -}}
+{{- $card := (resources.Get "og/paper.jpg").Filter $filters -}}
+{{- return ($card.Process "jpg q82" | resources.Copy (printf "og/%s.jpg" $name)) -}}
