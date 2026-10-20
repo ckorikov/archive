@@ -478,11 +478,6 @@ def generate_about(content_dir: Path, config: ArchiveConfig) -> None:
     """Generate about page with contacts."""
     about_path = content_dir / "about" / "_index.md"
 
-    # Skip if file exists (user-edited content)
-    if about_path.exists():
-        log.info("Skipped about/_index.md (exists)")
-        return
-
     contacts = {}
     if config.site.contacts:
         contacts = config.site.contacts.model_dump(exclude_none=True)

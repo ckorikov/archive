@@ -1,7 +1,10 @@
 """Unit tests for generate.py helpers."""
 
+from pathlib import Path
+
 from generate import (
     curate_tags,
+    generate_about,
     pub_to_item,
     quote_block,
     strip_shortcodes,
@@ -112,3 +115,17 @@ class TestPubToItem:
         config = make_config()
         pub = Publication(id="P", type="journalArticle", year=2024, title="T")
         assert "license" not in pub_to_item(pub, config)
+
+
+class TestGenerateAbout:
+    def test_overwrites_stale_page(self, tmp_path: Path) -> None:
+        about_path = tmp_path / "about" / "_index.md"
+        about_path.parent.mkdir(parents=True)
+        about_path.write_text("---\ntitle: About\n---\n\nStale bio")
+        config = ArchiveConfig(site=SiteConfig(author="Owner", bio="Fresh bio"))
+
+        generate_about(tmp_path, config)
+
+        text = about_path.read_text()
+        assert "Fresh bio" in text
+        assert "Stale bio" not in text
