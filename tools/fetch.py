@@ -6,6 +6,7 @@ import os
 import re
 import threading
 import time
+from collections import Counter
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -119,20 +120,21 @@ def _merge_related(
     records are skipped, so bidirectional relations collapse once.
     """
     by_key = {p.id: p for p in publications}
-    to_remove: set[str] = set()
-    for pub in publications:
-        if pub.id in to_remove:
-            continue
-        for related_key in relations.get(pub.id, []):
-            related = by_key.get(related_key)
-            if related is None or related.id in to_remove:
-                continue
-            dropped = fold(pub, related)
-            if dropped:
-                to_remove.add(dropped)
-    if to_remove:
-        log.info(f"Merged {len(to_remove)} {label}")
-    return [p for p in publications if p.id not in to_remove]
+    dropped: set[str] = set()
+    # Lazy on purpose: `dropped` is consulted as the walk reaches each pair.
+    pairs = (
+        (pub, by_key[key])
+        for pub in publications
+        if pub.id not in dropped
+        for key in relations.get(pub.id, [])
+        if key in by_key and key not in dropped
+    )
+    for pub, related in pairs:
+        if secondary := fold(pub, related):
+            dropped.add(secondary)
+    if dropped:
+        log.info(f"Merged {len(dropped)} {label}")
+    return [p for p in publications if p.id not in dropped]
 
 
 def merge_preprints(
@@ -179,22 +181,10 @@ def merge_event_artifacts(
 
 def parse_item(data: dict[str, Any]) -> Publication | None:
     """Parse Zotero item data into Publication."""
-    item_type = data.get("itemType", "")
-
-    if "websiteType" in data:
-        item_type = data["websiteType"].lower()
-
+    item_type = _item_type(data)
     year, month, day = parse_date(data.get("date"))
     if year == 0:
         return None
-
-    def creators_of(*types: str | None) -> list[Author]:
-        wanted = set(types)
-        return [
-            Author(firstName=c.get("firstName", ""), lastName=c.get("lastName", ""))
-            for c in data.get("creators", [])
-            if c.get("creatorType") in wanted
-        ]
 
     license_ = empty_to_none(data.get("rights")) if item_type == SOFTWARE_TYPE else None
 
@@ -205,7 +195,7 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
         month=month,
         day=day,
         title=data.get("title", "Untitled"),
-        authors=creators_of(*AUTHOR_TYPES),
+        authors=_authors(data),
         tags=[tag["tag"] for tag in data.get("tags", [])],
         url=empty_to_none(data.get("url")),
         license=license_,
@@ -215,6 +205,22 @@ def parse_item(data: dict[str, Any]) -> Publication | None:
         section=empty_to_none(data.get("sessionTitle")),
         presentationType=empty_to_none(data.get("presentationType")),
     )
+
+
+def _item_type(data: dict[str, Any]) -> str:
+    """Zotero itemType, overridden by a lowercased websiteType when present."""
+    if "websiteType" in data:
+        return data["websiteType"].lower()
+    return data.get("itemType", "")
+
+
+def _authors(data: dict[str, Any]) -> list[Author]:
+    """Creators whose role answers "who made it" (see AUTHOR_TYPES)."""
+    return [
+        Author(firstName=c.get("firstName", ""), lastName=c.get("lastName", ""))
+        for c in data.get("creators", [])
+        if c.get("creatorType") in AUTHOR_TYPES
+    ]
 
 
 def fetch_item_details(zt_factory: Callable[[], zotero.Zotero], key: str, retries: int = 3) -> dict[str, Any]:
@@ -230,25 +236,50 @@ def fetch_item_details(zt_factory: Callable[[], zotero.Zotero], key: str, retrie
     timer will throttle the next call.
     """
     zt = zt_factory()
-    for attempt in range(retries):
-        try:
-            result = zt.item(key)
-            if isinstance(result, dict):
-                return result
-            log.debug(f"Rate-limited on {key} (attempt {attempt + 1}/{retries}): {result[:80]!r}")
-        except Exception as e:
-            if attempt == retries - 1:
-                raise
-            log.debug(f"Retry {attempt + 1}/{retries} for {key}: {e}")
-        if attempt < retries - 1:
-            time.sleep(2**attempt)  # 1s, 2s, 4s
+    for attempt in range(1, retries + 1):
+        if attempt > 1:
+            time.sleep(2 ** (attempt - 2))  # 1s, 2s, 4s
+        result = _try_fetch(zt, key, f"{attempt}/{retries}", is_last=attempt == retries)
+        if result is not None:
+            return result
     raise RuntimeError(f"Failed to fetch {key} after {retries} retries (rate-limited)")
+
+
+def _try_fetch(zt: zotero.Zotero, key: str, progress: str, *, is_last: bool) -> dict[str, Any] | None:
+    """One fetch attempt: the item, or None to retry. Errors re-raise on the last try."""
+    try:
+        result = zt.item(key)
+        if isinstance(result, dict):
+            return result
+        log.debug(f"Rate-limited on {key} (attempt {progress}): {result[:80]!r}")
+    except Exception as e:
+        if is_last:
+            raise
+        log.debug(f"Retry {progress} for {key}: {e}")
+    return None
 
 
 def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
     """Fetch all items from Zotero with full details (parallel)."""
     log.info(f"Fetching from Zotero library {config.library_id}")
+    zt_factory = _per_thread_client(config)
 
+    zt = zt_factory()
+    zt.add_parameters(sort="date")
+    items = zt.everything(zt.publications())
+    log.info(f"Fetched {len(items)} items, getting details...")
+
+    keys = [item["data"]["key"] for item in items]
+    with ThreadPoolExecutor(max_workers=config.workers) as executor:
+        futures = [executor.submit(fetch_item_details, zt_factory, key, config.retries) for key in keys]
+        detailed = [future.result() for future in as_completed(futures)]
+
+    log.info(f"Fetched {len(detailed)} item details")
+    return detailed
+
+
+def _per_thread_client(config: ZoteroFetcherConfig) -> Callable[[], zotero.Zotero]:
+    """Factory returning one lazily created Zotero client per thread."""
     local = threading.local()
 
     def zt_factory() -> zotero.Zotero:
@@ -258,22 +289,7 @@ def fetch_from_zotero(config: ZoteroFetcherConfig) -> list[dict[str, Any]]:
             local.client = client
         return client
 
-    zt = zt_factory()
-    zt.add_parameters(sort="date")
-
-    items = zt.everything(zt.publications())
-    log.info(f"Fetched {len(items)} items, getting details...")
-
-    keys = [item["data"]["key"] for item in items]
-    detailed = []
-
-    with ThreadPoolExecutor(max_workers=config.workers) as executor:
-        futures = {executor.submit(fetch_item_details, zt_factory, key, config.retries): key for key in keys}
-        for future in as_completed(futures):
-            detailed.append(future.result())
-
-    log.info(f"Fetched {len(detailed)} item details")
-    return detailed
+    return zt_factory
 
 
 def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
@@ -282,37 +298,47 @@ def parse_items(items: list[dict[str, Any]]) -> list[Publication]:
     Related items are merged into a primary record's `artifacts` list: a
     preprint contributes its arXiv link, a video its recording link.
     """
-    publications = []
-    relations: dict[str, list[str]] = {}
-    skipped_attachments = 0
-    skipped_no_date = 0
-
-    for item in items:
-        data = item.get("data", item)
-        item_type = data.get("itemType", "")
-        title = data.get("title", "unknown")
-
-        if item_type in SKIP_TYPES:
-            log.warning(f"Skipped {item_type}: {title}")
-            skipped_attachments += 1
-            continue
-
-        pub = parse_item(data)
-        if pub:
-            publications.append(pub)
-            related = extract_related_keys(data)
-            if related:
-                relations[pub.id] = related
-        else:
-            log.warning(f"Skipped (no date): {title}")
-            skipped_no_date += 1
-
-    log.info(f"Parsed {len(publications)}/{len(items)} items")
-    if skipped_attachments or skipped_no_date:
-        log.warning(f"Total skipped: {skipped_attachments} attachments, {skipped_no_date} no date")
-
+    publications, relations = _parse_publications(items)
     merged = merge_preprints(publications, relations)
     return merge_event_artifacts(merged, relations)
+
+
+def _parse_publications(
+    items: list[dict[str, Any]],
+) -> tuple[list[Publication], dict[str, list[str]]]:
+    """Parse items into Publications plus their Related Item keys, logging skips."""
+    publications: list[Publication] = []
+    relations: dict[str, list[str]] = {}
+    skipped = Counter[str]()
+    for item in items:
+        data = item.get("data", item)
+        pub = _parse_or_skip(data, skipped)
+        if pub is None:
+            continue
+        publications.append(pub)
+        if related := extract_related_keys(data):
+            relations[pub.id] = related
+
+    log.info(f"Parsed {len(publications)}/{len(items)} items")
+    if skipped:
+        log.warning(f"Total skipped: {skipped['attachments']} attachments, {skipped['no date']} no date")
+    return publications, relations
+
+
+def _parse_or_skip(data: dict[str, Any], skipped: Counter[str]) -> Publication | None:
+    """Parse one item, or log and count in `skipped` why it was dropped."""
+    item_type = data.get("itemType", "")
+    title = data.get("title", "unknown")
+    if item_type in SKIP_TYPES:
+        log.warning(f"Skipped {item_type}: {title}")
+        skipped["attachments"] += 1
+        return None
+
+    pub = parse_item(data)
+    if pub is None:
+        log.warning(f"Skipped (no date): {title}")
+        skipped["no date"] += 1
+    return pub
 
 
 @click.command()
