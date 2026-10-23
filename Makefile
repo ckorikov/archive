@@ -9,7 +9,7 @@ PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
 CONTENT_STAMP := $(CONTENT_DIR)/.stamp
 
-.PHONY: all build deploy serve debug clean fetch validate generate lint check format test help
+.PHONY: all build deploy serve debug clean fetch validate generate favicon lint check format test help
 
 all: build
 
@@ -24,6 +24,7 @@ help:
 	@echo "  fetch     Fetch publications from Zotero"
 	@echo "  validate  Validate data files"
 	@echo "  generate  Generate Hugo content"
+	@echo "  favicon   Rebuild favicons from site font (needs rsvg-convert)"
 	@echo "  lint      Lint all source files (Python, YAML, HTML)"
 	@echo "  format    Format all source files (Python, HTML, CSS)"
 
@@ -43,6 +44,10 @@ generate: validate
 		--publications $(PUBLICATIONS) \
 		--config $(CONFIG) \
 		--output $(CONTENT_DIR)
+
+# Rebuild favicon.svg + PNG/ICO from the site font
+favicon:
+	$(UV_RUN) $(TOOLS_DIR)/favicon.py --output $(SITE_DIR)/static
 
 # Incremental build via stamp file
 $(CONTENT_STAMP): $(PUBLICATIONS) $(CONFIG)

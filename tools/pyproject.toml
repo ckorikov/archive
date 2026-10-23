@@ -44,6 +44,8 @@ typeCheckingMode = "strict"
 [dependency-groups]
 dev = [
     "djlint>=1.46.6",
+    "fonttools[woff]>=4.67.0",
+    "pillow>=13.0.0",
     "playwright>=1.58.0",
     "pytest-playwright>=0.7.2",
     "ruff>=0.15.7",
