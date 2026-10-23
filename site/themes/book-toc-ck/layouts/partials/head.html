@@ -6,7 +6,10 @@
 {{/* Favicon */}}
 {{- with site.Params.favicon -}}
 {{- with .ico }}
-<link rel="icon" href="{{ . }}" sizes="any">
+<link rel="icon" href="{{ . }}" sizes="32x32">
+{{ end }}
+{{- with .svg }}
+<link rel="icon" type="image/svg+xml" href="{{ . }}">
 {{ end }}
 {{- with .png32 }}
 <link rel="icon" type="image/png" sizes="32x32" href="{{ . }}">
