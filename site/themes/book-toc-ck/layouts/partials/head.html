@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f3f1ec">
 {{- $home_title := printf "%s — %s" site.Params.author site.Title -}}
 <title>{{ if .IsHome }}{{ $home_title }}{{ else }}{{ printf "%s — %s" .Title site.Title }}{{ end }}</title>
 {{/* Favicon */}}
