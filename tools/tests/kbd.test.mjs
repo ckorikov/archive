@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { toRu, toEn, onlyEn, onlyRu, LAYOUTS } from "../../site/extra/tools/kbd/kbd.js";
+import { toRu, toEn, onlyEn, onlyRu, keyOf, KEY_ROWS, LAYOUTS } from "../../site/extra/tools/kbd/kbd.js";
 
 test("words", () => {
   assert.equal(toRu("ghbdtn"), "привет");
@@ -37,4 +37,26 @@ test("only own layout is kept", () => {
   assert.equal(onlyEn(LAYOUTS.EN), LAYOUTS.EN);
   assert.equal(onlyRu(LAYOUTS.RU), LAYOUTS.RU);
   assert.equal(onlyEn("123 -=\n😀"), "123 -=\n😀");
+});
+
+test("keyOf finds the physical key", () => {
+  const { EN, RU } = LAYOUTS;
+  assert.equal(keyOf("q", EN), "q");
+  assert.equal(keyOf("Q", EN), "q");
+  assert.equal(keyOf("й", RU), "q");
+  assert.equal(keyOf("Ё", RU), "`");
+  assert.equal(keyOf('"', EN), "'"); // Shift+' in EN
+  assert.equal(keyOf('"', RU), "2"); // Shift+2 in RU
+  assert.equal(keyOf("?", RU), "7");
+  assert.equal(keyOf("/", RU), "\\");
+  assert.equal(keyOf(",", RU), "/");
+  assert.equal(keyOf("5", RU), "5");
+  assert.equal(keyOf("й", EN), null);
+  assert.equal(keyOf(" ", EN), null);
+});
+
+test("every layout char maps to a keycap", () => {
+  const keys = new Set(KEY_ROWS.join(""));
+  for (const layout of Object.values(LAYOUTS))
+    for (const c of layout) assert.ok(keys.has(keyOf(c, layout)), c);
 });

@@ -12,6 +12,7 @@
                 placeholder="привет"></textarea>
     </label>
   </div>
+  <div class="keyboard" aria-hidden="true"></div>
   <style>
     .kbd {
       display: grid;
@@ -45,17 +46,90 @@
       outline: none;
       border-bottom-color: var(--c-accent);
     }
+    .keyboard {
+      --u: calc((100% - 12 * var(--gap)) / 13);
+      --gap: 0.3rem;
+      display: grid;
+      gap: var(--gap);
+      margin-top: var(--space-xl);
+    }
+    .keyboard__row {
+      display: flex;
+      gap: var(--gap);
+    }
+    .keyboard__row:nth-child(2) { padding-left: calc(var(--u) * 0.5); }
+    .keyboard__row:nth-child(3) { padding-left: calc(var(--u) * 0.75); }
+    .keyboard__row:nth-child(4) { padding-left: calc(var(--u) * 1.25); }
+    .key {
+      position: relative;
+      flex: 0 0 var(--u);
+      aspect-ratio: 1;
+      border: 1px solid var(--c-selection);
+      border-radius: 2px;
+      color: var(--c-ink-medium);
+      transition: color 0.4s ease, border-color 0.4s ease;
+    }
+    .key__en,
+    .key__ru {
+      position: absolute;
+      line-height: 1;
+    }
+    .key__en {
+      top: 12%;
+      left: 14%;
+      font-size: var(--text-xs);
+    }
+    .key__ru {
+      right: 14%;
+      bottom: 12%;
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--c-ink);
+    }
+    .key.is-pressed {
+      color: var(--c-accent);
+      border-color: var(--c-accent);
+      transition: none;
+    }
+    .key.is-pressed .key__ru { color: var(--c-accent); }
     @media (max-width: 540px) {
       .kbd { grid-template-columns: 1fr; }
+      .keyboard { --gap: 0.15rem; }
+      .key__en { font-size: 0.55rem; }
+      .key__ru { font-size: var(--text-xs); }
     }
   </style>
   {{- with .Resources.Get "kbd.js" | minify | fingerprint }}
   <script type="module">
-    import { toRu, toEn, onlyEn, onlyRu } from "{{ .RelPermalink }}";
+    import { toRu, toEn, onlyEn, onlyRu, keyOf, KEY_ROWS, LAYOUTS } from "{{ .RelPermalink }}";
     const en = document.getElementById("kbd-en");
     const ru = document.getElementById("kbd-ru");
-    const bind = (field, only, other, convert) =>
-      field.addEventListener("input", () => {
+    const board = document.querySelector(".keyboard");
+
+    const keys = new Map();
+    const span = (cls, text) =>
+      Object.assign(document.createElement("span"), { className: cls, textContent: text });
+    for (const row of KEY_ROWS) {
+      const line = board.appendChild(span("keyboard__row", ""));
+      for (const c of row) {
+        const key = line.appendChild(span("key", ""));
+        const r = toRu(c);
+        key.append(span("key__en", c.toUpperCase()));
+        if (r !== c) key.append(span("key__ru", r));
+        keys.set(c, key);
+      }
+    }
+
+    const press = (c, layout) => {
+      const key = keys.get(keyOf(c, layout));
+      if (!key) return;
+      key.classList.add("is-pressed");
+      clearTimeout(key.timer);
+      key.timer = setTimeout(() => key.classList.remove("is-pressed"), 150);
+    };
+
+    const bind = (field, only, other, convert, layout) =>
+      field.addEventListener("input", (e) => {
         const clean = only(field.value);
         if (clean !== field.value) {
           const caret = field.selectionEnd - (field.value.length - clean.length);
@@ -63,9 +137,10 @@
           field.setSelectionRange(caret, caret);
         }
         other.value = convert(clean);
+        if (e.inputType === "insertText" && e.data) press(e.data.at(-1), layout);
       });
-    bind(en, onlyEn, ru, toRu);
-    bind(ru, onlyRu, en, toEn);
+    bind(en, onlyEn, ru, toRu, LAYOUTS.EN);
+    bind(ru, onlyRu, en, toEn, LAYOUTS.RU);
   </script>
   {{- end }}
 {{ end }}
