@@ -53,3 +53,23 @@ def test_page_has_own_og_card(page: Page, path: str, name: str) -> None:
     response = page.request.get(image_url)
     assert response.status == 200, f"{image_url} returned {response.status}"
     assert response.headers["content-type"] == "image/jpeg"
+
+
+def test_tools_not_in_nav(page: Page) -> None:
+    page.goto(BASE_URL + "/")
+    expect(page.locator('.nav a[href^="/tools"]')).to_have_count(0)
+
+
+def test_kbd_converts_both_ways(page: Page) -> None:
+    page.goto(BASE_URL + "/tools/kbd/")
+    page.fill("#kbd-en", "ghbdtn")
+    expect(page.locator("#kbd-ru")).to_have_value("привет")
+    page.fill("#kbd-ru", "руддщ")
+    expect(page.locator("#kbd-en")).to_have_value("hello")
+
+
+def test_kbd_rejects_other_layout(page: Page) -> None:
+    page.goto(BASE_URL + "/tools/kbd/")
+    page.locator("#kbd-en").press_sequentially("hiпр!")
+    expect(page.locator("#kbd-en")).to_have_value("hi!")
+    expect(page.locator("#kbd-ru")).to_have_value("рш!")

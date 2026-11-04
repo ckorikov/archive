@@ -14,6 +14,8 @@ PAGES = [
     ("/casimir/", "casimir"),
     ("/ai/", "ai"),
     ("/about/", "about"),
+    ("/tools/", "tools"),
+    ("/tools/kbd/", "kbd"),
 ]
 
 

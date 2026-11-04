@@ -21,3 +21,12 @@ enableRobotsTxt = true
   png16 = "/favicon-16x16.png"
   apple_touch_icon = "/apple-touch-icon.png"
   manifest = "/site.webmanifest"
+
+# Hand-written pages (tools) live outside the generated content/ dir.
+# An explicit content mount replaces the default, so content/ is listed too.
+[[module.mounts]]
+  source = "content"
+  target = "content"
+[[module.mounts]]
+  source = "extra"
+  target = "content"

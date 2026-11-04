@@ -1,0 +1,71 @@
+{{ define "main" }}
+  <h1 class="page-title">{{ .Title }}</h1>
+  <div class="kbd">
+    <label class="kbd__field">
+      <span class="kbd__label">QWERTY</span>
+      <textarea id="kbd-en" rows="4" spellcheck="false" autocomplete="off" autofocus
+                placeholder="ghbdtn"></textarea>
+    </label>
+    <label class="kbd__field">
+      <span class="kbd__label">ЙЦУКЕН</span>
+      <textarea id="kbd-ru" rows="4" spellcheck="false" autocomplete="off"
+                placeholder="привет"></textarea>
+    </label>
+  </div>
+  <style>
+    .kbd {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-lg);
+    }
+    .kbd__label {
+      display: block;
+      font-size: var(--text-xs);
+      letter-spacing: 0.2em;
+      color: var(--c-ink-medium);
+      margin-bottom: var(--space-sm);
+    }
+    .kbd textarea {
+      width: 100%;
+      font: inherit;
+      font-size: var(--text-lg);
+      color: var(--c-ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--c-ink-medium);
+      resize: vertical;
+      padding: var(--space-xs) 0;
+    }
+    .kbd textarea::placeholder {
+      color: var(--c-ink-medium);
+      opacity: 0.5;
+      font-style: italic;
+    }
+    .kbd textarea:focus-visible {
+      outline: none;
+      border-bottom-color: var(--c-accent);
+    }
+    @media (max-width: 540px) {
+      .kbd { grid-template-columns: 1fr; }
+    }
+  </style>
+  {{- with .Resources.Get "kbd.js" | minify | fingerprint }}
+  <script type="module">
+    import { toRu, toEn, onlyEn, onlyRu } from "{{ .RelPermalink }}";
+    const en = document.getElementById("kbd-en");
+    const ru = document.getElementById("kbd-ru");
+    const bind = (field, only, other, convert) =>
+      field.addEventListener("input", () => {
+        const clean = only(field.value);
+        if (clean !== field.value) {
+          const caret = field.selectionEnd - (field.value.length - clean.length);
+          field.value = clean;
+          field.setSelectionRange(caret, caret);
+        }
+        other.value = convert(clean);
+      });
+    bind(en, onlyEn, ru, toRu);
+    bind(ru, onlyRu, en, toEn);
+  </script>
+  {{- end }}
+{{ end }}
