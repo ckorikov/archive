@@ -9,7 +9,7 @@ PUBLICATIONS := $(STATIC_DATA_DIR)/publications.json
 CONFIG := archive.yaml
 CONTENT_STAMP := $(CONTENT_DIR)/.stamp
 
-.PHONY: all build deploy serve debug clean fetch validate generate favicon lint check format test help
+.PHONY: all build deploy serve debug clean fetch validate generate favicon lint check format test test-js help
 
 all: build
 
@@ -82,6 +82,10 @@ check: lint
 # Run smoke and visual tests (server must be running: make serve)
 test:
 	$(UV_RUN) pytest $(TOOLS_DIR)/tests/ -v
+
+# Unit tests for site JS (tools)
+test-js:
+	node --test 'tools/tests/*.test.mjs'
 
 # Format all source files (Python + HTML + CSS)
 format:
