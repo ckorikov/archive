@@ -1,5 +1,4 @@
 ---
-title: "Keyboard layout"
-description: "Fix text typed in the wrong layout: QWERTY ↔ ЙЦУКЕН"
+title: "QWERTY ↔ ЙЦУКЕН converter"
 layout: "kbd"
 ---
