@@ -73,3 +73,18 @@ def test_kbd_rejects_other_layout(page: Page) -> None:
     page.locator("#kbd-en").press_sequentially("hiпр!")
     expect(page.locator("#kbd-en")).to_have_value("hi!")
     expect(page.locator("#kbd-ru")).to_have_value("рш!")
+
+
+def test_kbd_fields_resize_together(page: Page) -> None:
+    page.goto(BASE_URL + "/tools/kbd/")
+    page.locator("#kbd-en").evaluate("el => el.style.height = '300px'")
+    expect(page.locator("#kbd-ru")).to_have_js_property("offsetHeight", 300)
+    page.locator("#kbd-ru").evaluate("el => el.style.height = '150px'")
+    expect(page.locator("#kbd-en")).to_have_js_property("offsetHeight", 150)
+
+
+def test_kbd_fields_keep_min_height(page: Page) -> None:
+    page.goto(BASE_URL + "/tools/kbd/")
+    page.locator("#kbd-en").evaluate("el => el.style.height = '0px'")
+    expect(page.locator("#kbd-ru")).not_to_have_js_property("offsetHeight", 0)
+    assert page.locator("#kbd-en").evaluate("el => el.offsetHeight") > 40

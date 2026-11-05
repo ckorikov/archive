@@ -1,19 +1,26 @@
 {{ define "main" }}
-  <h1 class="page-title">{{ .Title }}</h1>
-  <div class="kbd">
+<h1 class="page-title">{{ .Title }}</h1>
+<div class="kbd">
     <label class="kbd__field">
-      <span class="kbd__label">QWERTY</span>
-      <textarea id="kbd-en" rows="4" spellcheck="false" autocomplete="off" autofocus
-                placeholder="ghbdtn"></textarea>
+        <span class="kbd__label">QWERTY</span>
+        <textarea id="kbd-en"
+                  rows="4"
+                  spellcheck="false"
+                  autocomplete="off"
+                  autofocus
+                  placeholder="ghbdtn"></textarea>
     </label>
     <label class="kbd__field">
-      <span class="kbd__label">ЙЦУКЕН</span>
-      <textarea id="kbd-ru" rows="4" spellcheck="false" autocomplete="off"
-                placeholder="привет"></textarea>
+        <span class="kbd__label">ЙЦУКЕН</span>
+        <textarea id="kbd-ru"
+                  rows="4"
+                  spellcheck="false"
+                  autocomplete="off"
+                  placeholder="привет"></textarea>
     </label>
-  </div>
-  <div class="keyboard" aria-hidden="true"></div>
-  <style>
+</div>
+<div class="keyboard" aria-hidden="true"></div>
+<style>
     .kbd {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -36,6 +43,7 @@
       border-bottom: 1px solid var(--c-ink-medium);
       resize: vertical;
       padding: var(--space-xs) 0;
+      min-height: calc(2lh + 2 * var(--space-xs));
     }
     .kbd textarea::placeholder {
       color: var(--c-ink-medium);
@@ -98,9 +106,9 @@
       .key__en { font-size: 0.55rem; }
       .key__ru { font-size: var(--text-xs); }
     }
-  </style>
-  {{- with .Resources.Get "kbd.js" | minify | fingerprint }}
-  <script type="module">
+</style>
+{{- with .Resources.Get "kbd.js" | minify | fingerprint }}
+<script type="module">
     import { toRu, toEn, onlyEn, onlyRu, keyOf, KEY_ROWS, LAYOUTS } from "{{ .RelPermalink }}";
     const en = document.getElementById("kbd-en");
     const ru = document.getElementById("kbd-ru");
@@ -141,6 +149,17 @@
       });
     bind(en, onlyEn, ru, toRu, LAYOUTS.EN);
     bind(ru, onlyRu, en, toEn, LAYOUTS.RU);
-  </script>
-  {{- end }}
+
+    // Resizing one field resizes the other; equal heights end the ping-pong.
+    const sync = new ResizeObserver((entries) => {
+      for (const { target } of entries) {
+        const other = target === en ? ru : en;
+        if (other.offsetHeight !== target.offsetHeight)
+          other.style.height = `${target.offsetHeight}px`;
+      }
+    });
+    sync.observe(en);
+    sync.observe(ru);
+</script>
+{{- end }}
 {{ end }}
