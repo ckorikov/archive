@@ -4,7 +4,7 @@
     {{- range .Pages }}
       <div class="item">
         <a class="item__title" href="{{ .RelPermalink }}">{{ .Title }}</a>
-        {{- with .Description }}<span class="item__meta"> — {{ . }}</span>{{ end }}
+        {{- with .Description }}<br><span class="item__meta">{{ . }}</span>{{ end }}
       </div>
     {{- end }}
   </div>

@@ -1,0 +1,20 @@
+<div class="tool-header">
+    <h1 class="tool-header__title">{{ .Title }}</h1>
+    {{- with .Description }}
+    <p class="tool-header__description">{{ . }}</p>
+    {{- end }}
+</div>
+<style>
+    .tool-header {
+      margin-bottom: var(--space-xl);
+    }
+    .tool-header__title {
+      font-size: var(--text-xl);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+    }
+    .tool-header__description {
+      color: var(--c-ink-medium);
+      line-height: 1.55;
+    }
+</style>

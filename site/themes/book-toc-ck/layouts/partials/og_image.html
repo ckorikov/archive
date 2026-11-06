@@ -10,8 +10,10 @@
 {{- /* Label, title and subtitle from the page's own data */ -}}
 {{- $label := site.Params.header_label | default site.Title -}}
 {{- $title := .Title -}}
-{{- $sub := site.Params.description -}}
-{{- if eq .Type "course" -}}
+{{- $sub := .Description | default site.Params.description -}}
+{{- if eq .Type "tools" -}}
+{{- $label = "Tools" -}}
+{{- else if eq .Type "course" -}}
 {{- $label = "Teaching" -}}
 {{- $parts := slice .Params.school -}}
 {{- if not (strings.Contains .Title (string .Params.year)) }}{{ $parts = $parts | append (string .Params.year) }}{{ end -}}
