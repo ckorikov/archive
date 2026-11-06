@@ -4,6 +4,7 @@
     <label class="kbd__field">
         <span class="kbd__label">QWERTY</span>
         <textarea id="kbd-en"
+                  data-alphabet="en"
                   rows="4"
                   spellcheck="false"
                   autocomplete="off"
@@ -13,6 +14,7 @@
     <label class="kbd__field">
         <span class="kbd__label">ЙЦУКЕН</span>
         <textarea id="kbd-ru"
+                  data-alphabet="ru"
                   rows="4"
                   spellcheck="false"
                   autocomplete="off"
@@ -20,7 +22,38 @@
     </label>
 </div>
 <div class="keyboard" aria-hidden="true"></div>
+<div class="kbd-layout" id="kbd-layout"></div>
 <style>
+    .kbd-layout {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+      font-size: var(--text-sm);
+      color: var(--c-ink-medium);
+    }
+    .kbd-layout button {
+      font: inherit;
+      color: var(--c-ink-medium);
+      background: transparent;
+      border: 1px solid var(--c-selection);
+      padding: var(--space-xs) var(--space-sm);
+      cursor: pointer;
+    }
+    .kbd-layout button + button { margin-left: -1px; }
+    .kbd-layout button:first-child { border-radius: 2px 0 0 2px; }
+    .kbd-layout button:last-child { border-radius: 0 2px 2px 0; }
+    .kbd-layout button:hover { color: var(--c-ink); }
+    .kbd-layout button[aria-pressed="true"] {
+      color: var(--c-accent);
+      background: var(--c-selection);
+    }
+    .kbd-layout button:focus-visible {
+      position: relative;
+      z-index: 1;
+      outline: 1px solid var(--c-accent);
+      outline-offset: 2px;
+    }
     .kbd {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -55,23 +88,17 @@
       border-bottom-color: var(--c-accent);
     }
     .keyboard {
-      --u: calc((100% - 12 * var(--gap)) / 13);
       --gap: 0.3rem;
-      display: grid;
-      gap: var(--gap);
+      position: relative;
+      aspect-ratio: 15 / 5;
       margin-top: var(--space-xl);
     }
-    .keyboard__row {
-      display: flex;
-      gap: var(--gap);
-    }
-    .keyboard__row:nth-child(2) { padding-left: calc(var(--u) * 0.5); }
-    .keyboard__row:nth-child(3) { padding-left: calc(var(--u) * 0.75); }
-    .keyboard__row:nth-child(4) { padding-left: calc(var(--u) * 1.25); }
     .key {
-      position: relative;
-      flex: 0 0 var(--u);
-      aspect-ratio: 1;
+      position: absolute;
+      left: calc(var(--x) / 15 * 100% + var(--gap) / 2);
+      top: calc(var(--y) / 5 * 100% + var(--gap) / 2);
+      width: calc(var(--w) / 15 * 100% - var(--gap));
+      height: calc(var(--h) / 5 * 100% - var(--gap));
       border: 1px solid var(--c-selection);
       border-radius: 2px;
       color: var(--c-ink-medium);
@@ -100,6 +127,9 @@
       transition: none;
     }
     .key.is-pressed .key__ru { color: var(--c-accent); }
+    @media (prefers-reduced-motion: reduce) {
+      .key { transition: none; }
+    }
     @media (max-width: 540px) {
       .kbd { grid-template-columns: 1fr; }
       .keyboard { --gap: 0.15rem; }
@@ -109,57 +139,101 @@
 </style>
 {{- with .Resources.Get "kbd.js" | minify | fingerprint }}
 <script type="module">
-    import { toRu, toEn, onlyEn, onlyRu, keyOf, KEY_ROWS, LAYOUTS } from "{{ .RelPermalink }}";
-    const en = document.getElementById("kbd-en");
-    const ru = document.getElementById("kbd-ru");
+    import { LAYOUTS, detectLayout, layoutId } from "{{ .RelPermalink }}";
+    const PRESS_HIGHLIGHT_MS = 150;
+    const CHOICES = {
+      platform: { label: "Platform", options: { windows: "Windows", macos: "Mac" } },
+      geometry: { label: "Keyboard", options: { iso: "ISO", ansi: "ANSI" } },
+    };
+    const fields = [...document.querySelectorAll(".kbd textarea")];
     const board = document.querySelector(".keyboard");
+    const selector = document.getElementById("kbd-layout");
+    const keyElements = new Map();
+    let layout = detectLayout(navigator.userAgentData?.platform || navigator.platform);
+    let activeField = fields[0];
 
-    const keys = new Map();
-    const span = (cls, text) =>
-      Object.assign(document.createElement("span"), { className: cls, textContent: text });
-    for (const row of KEY_ROWS) {
-      const line = board.appendChild(span("keyboard__row", ""));
-      for (const c of row) {
-        const key = line.appendChild(span("key", ""));
-        const r = toRu(c);
-        key.append(span("key__en", c.toUpperCase()));
-        if (r !== c) key.append(span("key__ru", r));
-        keys.set(c, key);
-      }
-    }
+    const element = (tag, props) => Object.assign(document.createElement(tag), props);
+    const span = (className, textContent) => element("span", { className, textContent });
+    const otherField = (field) => fields.find((other) => other !== field);
 
-    const press = (c, layout) => {
-      const key = keys.get(keyOf(c, layout));
+    const createKey = ({ code, x, y, width, height, en, ru }) => {
+      const key = span("key", "");
+      key.dataset.code = code;
+      for (const [name, value] of Object.entries({ x, y, w: width, h: height }))
+        key.style.setProperty(`--${name}`, value);
+      if (!en) return key;
+      key.append(span("key__en", en.toUpperCase()));
+      if (ru !== en) key.append(span("key__ru", ru));
+      return key;
+    };
+
+    const renderKeyboard = () => {
+      for (const key of keyElements.values()) clearTimeout(key.timer);
+      keyElements.clear();
+      board.replaceChildren(...layout.keys.map((key) => {
+        const keyElement = createKey(key);
+        keyElements.set(key.code, keyElement);
+        return keyElement;
+      }));
+    };
+
+    const highlightKey = (code) => {
+      const key = keyElements.get(code);
       if (!key) return;
       key.classList.add("is-pressed");
       clearTimeout(key.timer);
-      key.timer = setTimeout(() => key.classList.remove("is-pressed"), 150);
+      key.timer = setTimeout(() => key.classList.remove("is-pressed"), PRESS_HIGHLIGHT_MS);
     };
 
-    const bind = (field, only, other, convert, layout) =>
-      field.addEventListener("input", (e) => {
-        const clean = only(field.value);
-        if (clean !== field.value) {
-          const caret = field.selectionEnd - (field.value.length - clean.length);
-          field.value = clean;
-          field.setSelectionRange(caret, caret);
-        }
-        other.value = convert(clean);
-        if (e.inputType === "insertText" && e.data) press(e.data.at(-1), layout);
+    // Strips foreign chars from the typed field and mirrors it into the other one.
+    const syncFields = () => {
+      const { keepOwn, convert } = layout[activeField.dataset.alphabet];
+      const clean = keepOwn(activeField.value);
+      if (clean !== activeField.value) {
+        const caret = keepOwn(activeField.value.slice(0, activeField.selectionEnd)).length;
+        activeField.value = clean;
+        activeField.setSelectionRange(caret, caret);
+      }
+      otherField(activeField).value = convert(clean);
+    };
+
+    const choiceButtons = Object.entries(CHOICES).flatMap(([name, { label, options }]) => {
+      const group = selector.appendChild(element("div"));
+      group.setAttribute("role", "group");
+      group.setAttribute("aria-label", label);
+      return Object.entries(options).map(([value, text]) => {
+        const button = group.appendChild(element("button", { type: "button", textContent: text }));
+        button.addEventListener("click", () => selectLayout({ ...layout, [name]: value }));
+        return { name, value, button };
       });
-    bind(en, onlyEn, ru, toRu, LAYOUTS.EN);
-    bind(ru, onlyRu, en, toEn, LAYOUTS.RU);
+    });
+
+    const selectLayout = ({ platform, geometry }) => {
+      layout = LAYOUTS[layoutId(platform, geometry)];
+      for (const { name, value, button } of choiceButtons)
+        button.setAttribute("aria-pressed", String(layout[name] === value));
+      renderKeyboard();
+      syncFields();
+    };
+    selectLayout(layout);
 
     // Resizing one field resizes the other; equal heights end the ping-pong.
-    const sync = new ResizeObserver((entries) => {
+    const heightSync = new ResizeObserver((entries) => {
       for (const { target } of entries) {
-        const other = target === en ? ru : en;
+        const other = otherField(target);
         if (other.offsetHeight !== target.offsetHeight)
           other.style.height = `${target.offsetHeight}px`;
       }
     });
-    sync.observe(en);
-    sync.observe(ru);
+
+    for (const field of fields) {
+      heightSync.observe(field);
+      field.addEventListener("keydown", (event) => highlightKey(layout.pressedCode(event)));
+      field.addEventListener("input", () => {
+        activeField = field;
+        syncFields();
+      });
+    }
 </script>
 {{- end }}
 {{ end }}

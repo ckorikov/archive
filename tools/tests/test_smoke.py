@@ -70,9 +70,12 @@ def test_kbd_converts_both_ways(page: Page) -> None:
 
 def test_kbd_rejects_other_layout(page: Page) -> None:
     page.goto(BASE_URL + "/tools/kbd/")
-    page.locator("#kbd-en").press_sequentially("hiпр!")
-    expect(page.locator("#kbd-en")).to_have_value("hi!")
-    expect(page.locator("#kbd-ru")).to_have_value("рш!")
+    page.fill("#kbd-en", "ghbdtn привет!")
+    expect(page.locator("#kbd-en")).to_have_value("ghbdtn !")
+    expect(page.locator("#kbd-ru")).to_have_value("привет !")
+    page.fill("#kbd-ru", "руддщ hello!")
+    expect(page.locator("#kbd-ru")).to_have_value("руддщ !")
+    expect(page.locator("#kbd-en")).to_have_value("hello !")
 
 
 def test_kbd_fields_resize_together(page: Page) -> None:
